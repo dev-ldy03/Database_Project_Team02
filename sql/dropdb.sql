@@ -24,10 +24,11 @@ DROP TABLE IF EXISTS PROFESSOR;
 DROP TABLE IF EXISTS DEPARTMENT;
 
 -- -----------------------------------------------------------------------------
--- 3. 데이터베이스 및 계정 삭제 (선택)
+-- 3. 데이터베이스 및 계정 삭제 
 --    전체 초기화 시 아래 주석 해제
+--    필요한 경우만 주석 해제
 -- -----------------------------------------------------------------------------
--- DROP DATABASE IF EXISTS DB2026Team02;
--- DROP USER IF EXISTS 'DB2026Team02'@'localhost';
--- DROP USER IF EXISTS 'DB2026Team02'@'%';
--- FLUSH PRIVILEGES;
+DROP DATABASE IF EXISTS DB2026Team02;
+DROP USER IF EXISTS 'DB2026Team02'@'localhost';
+DROP USER IF EXISTS 'DB2026Team02'@'%';
+FLUSH PRIVILEGES;

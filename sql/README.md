@@ -23,3 +23,20 @@ mysql -u root -p < sql/dropdb.sql
 ## 테이블 (생성 순서)
 
 `DEPARTMENT` → `PROFESSOR`, `CONSULTATION_BOOTH` → `TIME_SLOT` → `STUDENT` → `RESERVATION` → `CHECK_IN_RECORD`, `ONLINE_LINK`
+
+
+
+
+### 실행 방법:
+1. Workbench에서 root로 Local instance 3306 접속
+2. create.sql 열어서 전체 실행 (Ctrl+Shift+Enter)
+3. 오류 없으면 완료!
+
+DB 정보:
+- DB 이름: DB2026Team02
+- ID: DB2026Team02
+- PW: DB2026Team02
+- URL: localhost:3306
+
+초기화가 필요할 때:
+dropdb.sql 실행 → create.sql 실행 순서로!
