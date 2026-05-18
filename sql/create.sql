@@ -6,6 +6,12 @@
 -- -----------------------------------------------------------------------------
 -- 1. 데이터베이스 및 계정
 -- -----------------------------------------------------------------------------
+-- 기존 데이터베이스 및 계정 삭제
+DROP DATABASE IF EXISTS DB2026Team02;
+DROP USER IF EXISTS 'DB2026Team02'@'localhost';
+DROP USER IF EXISTS 'DB2026Team02'@'%';
+
+
 CREATE DATABASE IF NOT EXISTS DB2026Team02
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_unicode_ci;
@@ -191,27 +197,63 @@ GROUP BY b.booth_id, b.booth_name, d.department_name,
          ts.slot_id, ts.slot_date, ts.start_time, ts.end_time, ts.max_reservations;
 
 -- -----------------------------------------------------------------------------
--- 5. 초기 데이터 (샘플 — 팀에서 실제 데이터로 보완)
+-- 5. 초기 데이터 (샘플 )
 -- -----------------------------------------------------------------------------
-
+-- 5건
 INSERT INTO DEPARTMENT (department_name, location) VALUES
     ('컴퓨터공학과', '공학관 A동'),
-    ('경영학과', '경영관 B동');
+    ('경영학과', '경영관 B동'),
+    ('생명과학과', '생명관 C동'),
+    ('국제학부', '국제관 D동'),
+    ('교육학과', '사범관 E동');
 
+-- PROFESSOR 각 학과별 1~2명씩 (총 7건)
 INSERT INTO PROFESSOR (department_id, professor_name, email) VALUES
     (1, '김교수', 'prof.kim@ewha.ac.kr'),
-    (2, '이교수', 'prof.lee@ewha.ac.kr');
+    (1, '박교수', 'prof.park@ewha.ac.kr'),
+    (2, '이교수', 'prof.lee@ewha.ac.kr'),
+    (3, '최교수', 'prof.choi@ewha.ac.kr'),
+    (4, '정교수', 'prof.jung@ewha.ac.kr'),
+    (5, '한교수', 'prof.han@ewha.ac.kr'),
+    (5, '윤교수', 'prof.yoon@ewha.ac.kr');
 
+-- CONSULTATION_BOOTH 5건 (학과별 1개, 부스 유형 다양화)
 INSERT INTO CONSULTATION_BOOTH (department_id, booth_name, booth_type, capacity) VALUES
-    (1, '컴공 온라인 부스', 'ONLINE', 3),
-    (2, '경영 오프라인 부스', 'OFFLINE', 5);
+    (1, '컴퓨터공학 온라인 부스', 'ONLINE', 3),
+    (2, '경영학 오프라인 부스', 'OFFLINE', 5),
+    (3, '생명과학 하이브리드 부스', 'HYBRID', 4),
+    (4, '국제학부 온라인 부스', 'ONLINE', 2),
+    (5, '교육학 오프라인 부스', 'OFFLINE', 3);
 
+-- TIME_SLOT 5건 (부스별 상담 시간대)
 INSERT INTO TIME_SLOT (booth_id, slot_date, start_time, end_time, max_reservations) VALUES
     (1, '2026-05-20', '10:00:00', '10:30:00', 3),
-    (2, '2026-05-20', '14:00:00', '14:30:00', 5);
+    (2, '2026-05-20', '14:00:00', '14:30:00', 5),
+    (3, '2026-05-20', '11:00:00', '11:30:00', 4),
+    (4, '2026-05-20', '15:00:00', '15:30:00', 2),
+    (5, '2026-05-20', '09:00:00', '09:30:00', 3);
 
+-- STUDENT 5건
 INSERT INTO STUDENT (student_name, email, phone, major) VALUES
     ('홍길동', 'student1@ewha.ac.kr', '010-0000-0001', '컴퓨터공학'),
-    ('김영희', 'student2@ewha.ac.kr', '010-0000-0002', '경영학');
+    ('김영희', 'student2@ewha.ac.kr', '010-0000-0002', '경영학'),
+    ('이민준', 'student3@ewha.ac.kr', '010-0000-0003', '생명과학'),
+    ('박서연', 'student4@ewha.ac.kr', '010-0000-0004', '국제학'),
+    ('최지우', 'student5@ewha.ac.kr', '010-0000-0005', '교육학');
 
--- TODO: RESERVATION, CHECK_IN_RECORD, ONLINE_LINK 샘플 데이터 추가
+-- RESERVATION 5건 (STUDENT, TIME_SLOT, PROFESSOR, BOOTH 다 있어야 함)
+INSERT INTO RESERVATION (student_id, slot_id, professor_id, booth_id, status) VALUES
+    (1, 1, 1, 1, 'CONFIRMED'),
+    (2, 2, 3, 2, 'CONFIRMED'),
+    (3, 1, 2, 1, 'PENDING'),
+    (4, 2, 4, 2, 'CANCELLED'),
+    (5, 1, 1, 1, 'COMPLETED');
+
+-- CHECK_IN_RECORD (COMPLETED 상태인 예약에 대해)
+INSERT INTO CHECK_IN_RECORD (reservation_id, check_in_time, check_out_time) VALUES
+    (5, '2026-05-20 10:00:00', '2026-05-20 10:30:00');
+
+-- ONLINE_LINK (ONLINE 부스 예약에 대해)
+INSERT INTO ONLINE_LINK (reservation_id, meeting_url, meeting_password, expires_at) VALUES
+    (1, 'https://zoom.us/j/123456789', '1234', '2026-05-20 11:00:00'),
+    (3, 'https://zoom.us/j/987654321', '5678', '2026-05-20 11:00:00');
