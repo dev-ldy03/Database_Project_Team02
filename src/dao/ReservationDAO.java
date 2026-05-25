@@ -9,6 +9,13 @@ public class ReservationDAO {
 
     // 중복 예약 여부 확인
     public boolean hasDuplicateReservation(int studentId, int slotId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return hasDuplicateReservation(conn, studentId, slotId);
+        }
+    }
+
+    // 중복 예약 여부 확인 (트랜잭션용)
+    public boolean hasDuplicateReservation(Connection conn, int studentId, int slotId) throws SQLException {
         String sql = """
                 SELECT COUNT(*)
                 FROM RESERVATION
@@ -17,9 +24,7 @@ public class ReservationDAO {
                   AND status IN ('PENDING', 'CONFIRMED')
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, studentId);
             pstmt.setInt(2, slotId);
 
@@ -35,6 +40,13 @@ public class ReservationDAO {
 
     // 상담 시간대 예약 가능 여부 확인
     public boolean isSlotAvailable(int slotId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return isSlotAvailable(conn, slotId);
+        }
+    }
+
+    // 상담 시간대 예약 가능 여부 확인 (트랜잭션용)
+    public boolean isSlotAvailable(Connection conn, int slotId) throws SQLException {
         String sql = """
                 SELECT ts.max_reservations,
                        COUNT(r.reservation_id) AS current_reservations
@@ -44,11 +56,10 @@ public class ReservationDAO {
                  AND r.status IN ('PENDING', 'CONFIRMED')
                 WHERE ts.slot_id = ?
                 GROUP BY ts.slot_id, ts.max_reservations
+                FOR UPDATE
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, slotId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -66,15 +77,20 @@ public class ReservationDAO {
 
     // 예약 정보 저장
     public int insertReservation(Reservation reservation) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return insertReservation(conn, reservation);
+        }
+    }
+
+    // 예약 정보 저장 (트랜잭션용)
+    public int insertReservation(Connection conn, Reservation reservation) throws SQLException {
         String sql = """
                 INSERT INTO RESERVATION
                 (student_id, slot_id, professor_id, booth_id, status, notes)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, reservation.getStudentId());
             pstmt.setInt(2, reservation.getSlotId());
             pstmt.setInt(3, reservation.getProfessorId());
@@ -100,6 +116,13 @@ public class ReservationDAO {
 
     // 예약 취소
     public boolean cancelReservation(int reservationId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return cancelReservation(conn, reservationId);
+        }
+    }
+
+    // 예약 취소 (트랜잭션용)
+    public boolean cancelReservation(Connection conn, int reservationId) throws SQLException {
         String sql = """
                 UPDATE RESERVATION
                 SET status = 'CANCELLED'
@@ -107,9 +130,7 @@ public class ReservationDAO {
                   AND status IN ('PENDING', 'CONFIRMED')
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, reservationId);
 
             int affectedRows = pstmt.executeUpdate();
@@ -119,6 +140,18 @@ public class ReservationDAO {
 
     // 예약 ID로 예약 정보 조회
     public Reservation findById(int reservationId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return findById(conn, reservationId, false);
+        }
+    }
+
+    // 예약 ID로 예약 정보 조회 (트랜잭션용)
+    public Reservation findById(Connection conn, int reservationId) throws SQLException {
+        return findById(conn, reservationId, true);
+    }
+
+    // 예약 ID로 예약 정보 조회 공통 메서드
+    private Reservation findById(Connection conn, int reservationId, boolean forUpdate) throws SQLException {
         String sql = """
                 SELECT reservation_id, student_id, slot_id, professor_id,
                        booth_id, status, created_at, notes
@@ -126,9 +159,11 @@ public class ReservationDAO {
                 WHERE reservation_id = ?
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        if (forUpdate) {
+            sql += " FOR UPDATE";
+        }
 
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, reservationId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
