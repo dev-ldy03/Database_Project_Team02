@@ -266,7 +266,6 @@ public class DepartmentDetailPanel extends JPanel {
             t.getColumnModel().getColumn(i).setCellRenderer(defaultRenderer);
         }
 
-        // 상태 컬럼
         t.getColumnModel().getColumn(4).setCellRenderer((tbl, val, sel, foc, r, c) -> {
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(UIConstants.WHITE);
@@ -278,7 +277,6 @@ public class DepartmentDetailPanel extends JPanel {
             return wrapper;
         });
 
-        // 예약 버튼 컬럼
         t.getColumnModel().getColumn(5).setCellRenderer((tbl, val, sel, foc, row, col) -> {
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(UIConstants.WHITE);
@@ -520,7 +518,6 @@ public class DepartmentDetailPanel extends JPanel {
 
             List<TimeSlot> allSlots = new ArrayList<>();
 
-            // 각 부스별 예약 가능한 시간대를 backend service에서 조회
             for (ConsultationBooth booth : currentBooths) {
                 List<TimeSlot> slots = svc.getAvailableSlotsByBooth(booth.getBoothId());
 

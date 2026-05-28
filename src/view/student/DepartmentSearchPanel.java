@@ -105,7 +105,6 @@ public class DepartmentSearchPanel extends JPanel {
         try {
             StudentService svc = new StudentService();
 
-            // keyword가 비어 있으면 전체 학과 조회
             List<Department> depts = svc.searchDepartments(keyword);
 
             for (Department d : depts) {

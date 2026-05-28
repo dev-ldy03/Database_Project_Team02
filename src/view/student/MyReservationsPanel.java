@@ -273,7 +273,6 @@ public class MyReservationsPanel extends JPanel {
             return l;
         });
 
-        // 상태 column
         t.getColumnModel().getColumn(6).setCellRenderer((tbl, val, sel, foc, r, c) -> {
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(UIConstants.WHITE);
@@ -285,7 +284,6 @@ public class MyReservationsPanel extends JPanel {
             return wrapper;
         });
 
-        // 작업 column
         t.getColumnModel().getColumn(8).setCellRenderer((tbl, val, sel, foc, row, col) -> {
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(UIConstants.WHITE);
@@ -322,7 +320,6 @@ public class MyReservationsPanel extends JPanel {
 
                 if (row < 0) return;
 
-                // 작업 column
                 if (col == 8) {
                     String status = tableModel.getValueAt(row, 6) == null
                             ? ""

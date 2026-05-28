@@ -452,6 +452,20 @@ public class AdminDAO {
         return null;
     }
 
+    // 예약 확정 (PENDING → CONFIRMED)
+    public boolean confirmReservation(Connection conn, int reservationId) throws SQLException {
+        String sql = """
+                UPDATE RESERVATION
+                SET status = 'CONFIRMED'
+                WHERE reservation_id = ?
+                  AND status = 'PENDING'
+                """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, reservationId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
     // =========================================================================
     // NO-SHOW 관리
     // =========================================================================

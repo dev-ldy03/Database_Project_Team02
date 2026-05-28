@@ -39,7 +39,6 @@ public class LandingPanel extends JPanel {
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
-                // Decorative circles
                 g2.setColor(new Color(255, 255, 255, 15));
                 g2.fill(new Ellipse2D.Float(getWidth() - 180, -60, 260, 260));
                 g2.fill(new Ellipse2D.Float(-60, getHeight() - 120, 200, 200));
@@ -83,7 +82,7 @@ public class LandingPanel extends JPanel {
         JPanel cards = new JPanel(new GridLayout(1, 2, 40, 0));
         cards.setOpaque(false);
         cards.add(buildRoleCard("학생으로 시작 →", MainFrame.STUDENT_REGISTER));
-        cards.add(buildRoleCard("관리자로 시작 →", null));
+        cards.add(buildRoleCard("관리자로 시작 →", MainFrame.ADMIN_DASHBOARD));
         section.add(cards, BorderLayout.CENTER);
 
         return section;
@@ -96,7 +95,6 @@ public class LandingPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(UIConstants.WHITE);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
-                // Left accent bar
                 g2.setColor(UIConstants.PRIMARY);
                 g2.fill(new RoundRectangle2D.Float(0, 0, 5, getHeight(), 4, 4));
                 g2.dispose();
@@ -116,11 +114,39 @@ public class LandingPanel extends JPanel {
         card.add(btn, gbc);
 
         btn.addActionListener(e -> {
-            if (target != null) MainFrame.navigate(target);
-            else JOptionPane.showMessageDialog(this, "관리자 화면은 별도 실행 파일로 제공됩니다.",
-                    "안내", JOptionPane.INFORMATION_MESSAGE);
+            if (MainFrame.ADMIN_DASHBOARD.equals(target)) {
+                if (!checkAdminPassword()) return;
+            }
+            MainFrame.navigate(target);
         });
 
         return card;
+    }
+
+    // 본 프로젝트는 DB 과목 실습 범위상 관리자 로그인 테이블/인증 로직을 별도 구현하지 않으므로,
+    // 비밀번호를 코드에 직접 고정(hardcode)하여 간이 인증만 수행합니다.
+    private boolean checkAdminPassword() {
+        JPasswordField pwField = new JPasswordField(16);
+        pwField.setFont(UIConstants.f(Font.PLAIN, 14));
+
+        JPanel panel = new JPanel(new BorderLayout(0, 8));
+        panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
+        panel.add(pwField, BorderLayout.CENTER);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, panel, "관리자 로그인",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) return false;
+
+        String entered = new String(pwField.getPassword());
+        if ("ewha1886".equals(entered)) return true;
+
+        JOptionPane.showMessageDialog(
+                this, "비밀번호가 올바르지 않습니다.",
+                "인증 실패", JOptionPane.ERROR_MESSAGE
+        );
+        return false;
     }
 }

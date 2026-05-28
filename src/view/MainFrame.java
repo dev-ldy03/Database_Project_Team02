@@ -1,6 +1,7 @@
 package DB2026Team02.view;
 
 import DB2026Team02.model.ReservationDetail;
+import DB2026Team02.view.admin.*;
 import DB2026Team02.view.student.*;
 
 import javax.swing.*;
@@ -8,7 +9,6 @@ import java.awt.*;
 
 public class MainFrame extends JFrame {
 
-    /* ── Panel name constants ── */
     public static final String LANDING          = "LANDING";
     public static final String STUDENT_REGISTER = "STUDENT_REGISTER";
     public static final String STUDENT_HOME     = "STUDENT_HOME";
@@ -18,16 +18,21 @@ public class MainFrame extends JFrame {
     public static final String MY_RESERVATIONS  = "MY_RESERVATIONS";
     public static final String RESERVATION_DETAIL = "RESERVATION_DETAIL";
 
-    /* ── Singleton ── */
+    public static final String ADMIN_DASHBOARD   = "ADMIN_DASHBOARD";
+    public static final String ADMIN_RESERVATIONS = "ADMIN_RESERVATIONS";
+    public static final String ADMIN_CHECKIN     = "ADMIN_CHECKIN";
+    public static final String ADMIN_DEPT        = "ADMIN_DEPT";
+    public static final String ADMIN_PROF        = "ADMIN_PROF";
+    public static final String ADMIN_BOOTH       = "ADMIN_BOOTH";
+    public static final String ADMIN_TIMESLOT    = "ADMIN_TIMESLOT";
+
     private static MainFrame instance;
     public static MainFrame getInstance() { return instance; }
 
-    /* ── Session state ── */
     private static int    studentId         = -1;
     private static String studentName       = "";
     private static String studentEmail      = "";
 
-    /* ── Navigation context ── */
     private static int    selectedDeptId    = -1;
     private static String selectedDeptName  = "";
     private static int    selectedSlotId    = -1;
@@ -38,17 +43,22 @@ public class MainFrame extends JFrame {
     private static String selectedTime      = "";
     private static ReservationDetail selectedReservation = null;
 
-    /* ── CardLayout ── */
     private final CardLayout     cardLayout = new CardLayout();
     private final JPanel         cardPanel  = new JPanel(cardLayout);
 
-    /* Panel instances (lazy) */
     private StudentHomePanel      homePanel;
     private DepartmentSearchPanel searchPanel;
     private DepartmentDetailPanel detailPanel;
     private MakeReservationPanel  reservePanel;
     private MyReservationsPanel   myResPanel;
     private ReservationDetailPanel resDetailPanel;
+
+    private AdminDashboardPanel   adminDashboardPanel;
+    private ReservationListPanel  adminResvPanel;
+    private CheckInPanel          adminCheckInPanel;
+    private DepartmentMgmtPanel   adminDeptPanel;
+    private ProfessorMgmtPanel    adminProfPanel;
+    private BoothTimeSlotPanel    adminBoothSlotPanel;
 
     public MainFrame() {
         instance = this;
@@ -60,11 +70,9 @@ public class MainFrame extends JFrame {
 
         cardPanel.setBackground(Color.WHITE);
 
-        // Register static panels
         cardPanel.add(new LandingPanel(),         LANDING);
         cardPanel.add(new StudentRegisterPanel(),  STUDENT_REGISTER);
 
-        // Lazy panels added on first use
         homePanel      = new StudentHomePanel();
         searchPanel    = new DepartmentSearchPanel();
         detailPanel    = new DepartmentDetailPanel();
@@ -78,6 +86,20 @@ public class MainFrame extends JFrame {
         cardPanel.add(reservePanel,   MAKE_RESERVATION);
         cardPanel.add(myResPanel,     MY_RESERVATIONS);
         cardPanel.add(resDetailPanel, RESERVATION_DETAIL);
+
+        adminDashboardPanel  = new AdminDashboardPanel();
+        adminResvPanel       = new ReservationListPanel();
+        adminCheckInPanel    = new CheckInPanel();
+        adminDeptPanel       = new DepartmentMgmtPanel();
+        adminProfPanel       = new ProfessorMgmtPanel();
+        adminBoothSlotPanel  = new BoothTimeSlotPanel();
+
+        cardPanel.add(adminDashboardPanel,  ADMIN_DASHBOARD);
+        cardPanel.add(adminResvPanel,       ADMIN_RESERVATIONS);
+        cardPanel.add(adminCheckInPanel,    ADMIN_CHECKIN);
+        cardPanel.add(adminDeptPanel,       ADMIN_DEPT);
+        cardPanel.add(adminProfPanel,       ADMIN_PROF);
+        cardPanel.add(adminBoothSlotPanel,  ADMIN_BOOTH);
 
         add(cardPanel);
         cardLayout.show(cardPanel, LANDING);
@@ -100,6 +122,22 @@ public class MainFrame extends JFrame {
                     instance.myResPanel.refresh(); break;
                 case RESERVATION_DETAIL:
                     instance.resDetailPanel.refresh(); break;
+                case ADMIN_DASHBOARD:
+                    instance.adminDashboardPanel.refresh(); break;
+                case ADMIN_RESERVATIONS:
+                    instance.adminResvPanel.refresh(); break;
+                case ADMIN_CHECKIN:
+                    instance.adminCheckInPanel.refresh(); break;
+                case ADMIN_DEPT:
+                    instance.adminDeptPanel.refresh(); break;
+                case ADMIN_PROF:
+                    instance.adminProfPanel.refresh(); break;
+                case ADMIN_BOOTH:
+                    instance.adminBoothSlotPanel.showBooth(); break;
+                case ADMIN_TIMESLOT:
+                    instance.adminBoothSlotPanel.showTimeSlot();
+                    panel = ADMIN_BOOTH; // 같은 카드 사용
+                    break;
             }
         } catch (Exception ignored) {}
         instance.cardLayout.show(instance.cardPanel, panel);

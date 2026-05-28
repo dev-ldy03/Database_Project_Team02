@@ -280,7 +280,6 @@ public class StudentHomePanel extends JPanel {
             t.getColumnModel().getColumn(i).setCellRenderer(defaultRenderer);
         }
 
-        // 예약 ID column
         t.getColumnModel().getColumn(0).setCellRenderer((tbl, val, sel, foc, row, col) -> {
             JLabel lbl = new JLabel(val == null ? "" : val.toString());
             lbl.setFont(UIConstants.f(Font.BOLD, 13));
@@ -291,7 +290,6 @@ public class StudentHomePanel extends JPanel {
             return lbl;
         });
 
-        // 상태 column
         t.getColumnModel().getColumn(5).setCellRenderer((tbl, val, sel, foc, row, col) -> {
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(UIConstants.WHITE);
@@ -313,7 +311,6 @@ public class StudentHomePanel extends JPanel {
             col.setMinWidth(Math.max(60, widths[i] - 30));
         }
 
-        // row 클릭하면 예약 상세 페이지로 이동
         t.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -398,7 +395,6 @@ public class StudentHomePanel extends JPanel {
             }
 
         } catch (SQLException ex) {
-            // DB unavailable — show empty table silently
         }
     }
 

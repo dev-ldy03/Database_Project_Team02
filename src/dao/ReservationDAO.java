@@ -138,6 +138,18 @@ public class ReservationDAO {
         }
     }
 
+    // 예약 삭제
+    public boolean deleteReservation(int reservationId) throws SQLException {
+        String sql = "DELETE FROM RESERVATION WHERE reservation_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, reservationId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
     // 예약 ID로 예약 정보 조회
     public Reservation findById(int reservationId) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection()) {

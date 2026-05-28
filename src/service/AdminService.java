@@ -159,6 +159,48 @@ public class AdminService {
     }
 
     // =========================================================================
+    // 예약 확정 (트랜잭션)
+    // =========================================================================
+
+    public boolean confirmReservation(int reservationId) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            Reservation reservation = adminDAO.findReservationById(conn, reservationId);
+            if (reservation == null) {
+                conn.rollback();
+                System.out.println("해당 예약을 찾을 수 없습니다.");
+                return false;
+            }
+            if (!"PENDING".equals(reservation.getStatus())) {
+                conn.rollback();
+                System.out.println("확정 처리 불가 - 현재 상태: " + reservation.getStatus());
+                return false;
+            }
+
+            boolean success = adminDAO.confirmReservation(conn, reservationId);
+            if (!success) {
+                conn.rollback();
+                return false;
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                conn.close();
+            }
+        }
+    }
+
+    // =========================================================================
     // CHECK-IN 처리 (트랜잭션)
     // =========================================================================
 
@@ -177,7 +219,7 @@ public class AdminService {
                 return false;
             }
 
-            if (!"CONFIRMED".equals(reservation.getStatus()) && !"PENDING".equals(reservation.getStatus())) {
+            if (!"CONFIRMED".equals(reservation.getStatus())) {
                 conn.rollback();
                 System.out.println("체크인 처리 불가 - 현재 상태: " + reservation.getStatus());
                 return false;

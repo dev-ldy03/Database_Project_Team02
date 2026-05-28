@@ -476,7 +476,6 @@ public class ReservationDetailPanel extends JPanel {
 
         String status = r.getStatus() == null ? "" : r.getStatus();
 
-        // 1. 예약 생성
         timelinePanel.add(buildTimelineRow(
                 "green",
                 "예약 생성",
@@ -484,7 +483,6 @@ public class ReservationDetailPanel extends JPanel {
         ));
         timelinePanel.add(Box.createVerticalStrut(4));
 
-        // 2. status 별 진행 상황
         if ("PENDING".equals(status)) {
             timelinePanel.add(buildTimelineRow(
                     "blue",
