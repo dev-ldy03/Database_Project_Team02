@@ -20,6 +20,7 @@ public class ReservationDetail {
     private Date slotDate;
     private Time startTime;
     private Time endTime;
+    private String notes;
 
     public ReservationDetail() {
     }
@@ -127,4 +128,8 @@ public class ReservationDetail {
     public void setEndTime(Time endTime) {
         this.endTime = endTime;
     }
+
+    public String getNotes() { return notes; }
+
+    public void setNotes(String notes) { this.notes = notes; }
 }

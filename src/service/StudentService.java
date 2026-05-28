@@ -107,11 +107,8 @@ public class StudentService {
     // 상담 정보 검색
     // 학과 키워드 검색 (빈 키워드는 빈 리스트 반환)
     public List<Department> searchDepartments(String keyword) throws SQLException {
-        if (keyword == null || keyword.isBlank()) {
-            System.out.println("검색어를 입력하세요.");
-            return Collections.emptyList();
-        }
-        return studentDAO.findDepartmentsByKeyword(keyword.trim());
+        String safeKeyword = keyword == null ? "" : keyword.trim();
+        return studentDAO.findDepartmentsByKeyword(safeKeyword);
     }
 
     // 학과별 교수 목록 조회

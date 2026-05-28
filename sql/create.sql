@@ -160,6 +160,7 @@ SELECT
     r.reservation_id,
     r.status,
     r.created_at,
+    r.notes           AS notes,
     s.student_id,
     s.student_name,
     s.email           AS student_email,
