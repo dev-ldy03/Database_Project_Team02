@@ -34,7 +34,7 @@ public class AdminTest {
             System.out.println("수정 결과: " + (updated ? "성공" : "실패"));
 
             System.out.println("\n[TEST 4] 학과 삭제");
-            boolean deleted = adminService.deleteDepartment(newDeptId);
+            boolean deleted = adminService.deleteDepartmentCascade(newDeptId);
             System.out.println("삭제 결과: " + (deleted ? "성공" : "실패"));
 
             // ── 교수 조회 ──────────────────────────────────────────────────────

@@ -236,6 +236,26 @@ public class StudentDAO {
     }
 
     // 특정 부스의 예약 가능한 시간대 조회
+    public List<TimeSlot> findAllSlotsByBooth(int boothId) throws SQLException {
+        String sql = """
+                SELECT slot_id, booth_id, slot_date, start_time, end_time, max_reservations
+                FROM TIME_SLOT
+                WHERE booth_id = ?
+                ORDER BY slot_date, start_time
+                """;
+        List<TimeSlot> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, boothId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapTimeSlot(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     public List<TimeSlot> findAvailableSlotsByBooth(int boothId) throws SQLException {
         String sql = """
                 SELECT slot_id, booth_id, slot_date, start_time, end_time,

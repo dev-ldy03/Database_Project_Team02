@@ -39,10 +39,20 @@ public class AdminService {
         return success;
     }
 
-    public boolean deleteDepartment(int id) throws SQLException {
-        boolean success = adminDAO.deleteDepartment(id);
-        if (!success) System.out.println("해당 학과를 찾을 수 없습니다.");
-        return success;
+    public boolean deleteDepartmentCascade(int id) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+            boolean ok = adminDAO.deleteDepartmentCascade(conn, id);
+            if (ok) conn.commit(); else conn.rollback();
+            return ok;
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); } catch (SQLException ignored) {} conn.close(); }
+        }
     }
 
     // =========================================================================
@@ -68,10 +78,20 @@ public class AdminService {
         return success;
     }
 
-    public boolean deleteProfessor(int id) throws SQLException {
-        boolean success = adminDAO.deleteProfessor(id);
-        if (!success) System.out.println("해당 교수를 찾을 수 없습니다.");
-        return success;
+    public boolean deleteProfessorCascade(int id) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+            boolean ok = adminDAO.deleteProfessorCascade(conn, id);
+            if (ok) conn.commit(); else conn.rollback();
+            return ok;
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); } catch (SQLException ignored) {} conn.close(); }
+        }
     }
 
     // =========================================================================
@@ -97,10 +117,20 @@ public class AdminService {
         return success;
     }
 
-    public boolean deleteBooth(int id) throws SQLException {
-        boolean success = adminDAO.deleteBooth(id);
-        if (!success) System.out.println("해당 부스를 찾을 수 없습니다.");
-        return success;
+    public boolean deleteBoothCascade(int id) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+            boolean ok = adminDAO.deleteBoothCascade(conn, id);
+            if (ok) conn.commit(); else conn.rollback();
+            return ok;
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); } catch (SQLException ignored) {} conn.close(); }
+        }
     }
 
     // =========================================================================
@@ -114,6 +144,26 @@ public class AdminService {
     public int addTimeSlot(int boothId, java.sql.Date slotDate,
                            java.sql.Time startTime, java.sql.Time endTime,
                            int maxReservations) throws SQLException {
+
+        int capacity = adminDAO.getBoothCapacity(boothId);
+
+        if (capacity == -1) {
+            System.out.println("해당 부스를 찾을 수 없습니다.");
+            return -1;
+        }
+
+        if (maxReservations > capacity) {
+            System.out.println("시간대 최대 예약 수는 부스 정원을 초과할 수 없습니다.");
+            return -1;
+        }
+
+        if (adminDAO.existsOverlappingTimeSlot(boothId, slotDate, startTime, endTime, -1)) {
+            throw new IllegalArgumentException(
+                "해당 부스에 겹치는 시간대(" + slotDate + " " +
+                startTime.toString().substring(0, 5) + "~" +
+                endTime.toString().substring(0, 5) + ")가 이미 존재합니다.");
+        }
+
         TimeSlot slot = new TimeSlot();
         slot.setBoothId(boothId);
         slot.setSlotDate(slotDate);
@@ -128,6 +178,26 @@ public class AdminService {
     public boolean updateTimeSlot(int id, int boothId, java.sql.Date slotDate,
                                   java.sql.Time startTime, java.sql.Time endTime,
                                   int maxReservations) throws SQLException {
+
+        int capacity = adminDAO.getBoothCapacity(boothId);
+
+        if (capacity == -1) {
+            System.out.println("해당 부스를 찾을 수 없습니다.");
+            return false;
+        }
+
+        if (maxReservations > capacity) {
+            System.out.println("시간대 최대 예약 수는 부스 정원을 초과할 수 없습니다.");
+            return false;
+        }
+
+        if (adminDAO.existsOverlappingTimeSlot(boothId, slotDate, startTime, endTime, id)) {
+            throw new IllegalArgumentException(
+                "해당 부스에 겹치는 시간대(" + slotDate + " " +
+                startTime.toString().substring(0, 5) + "~" +
+                endTime.toString().substring(0, 5) + ")가 이미 존재합니다.");
+        }
+
         TimeSlot slot = new TimeSlot();
         slot.setSlotId(id);
         slot.setBoothId(boothId);
@@ -249,9 +319,43 @@ public class AdminService {
     }
 
     public boolean processCheckOut(int reservationId) throws SQLException {
-        boolean success = adminDAO.processCheckOut(reservationId);
-        if (!success) System.out.println("체크아웃 처리 불가 - 이미 체크아웃되었거나 체크인 기록이 없습니다.");
-        return success;
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            Reservation reservation = adminDAO.findReservationById(conn, reservationId);
+            if (reservation == null) {
+                conn.rollback();
+                return false;
+            }
+            if (!"CONFIRMED".equals(reservation.getStatus())) {
+                conn.rollback();
+                return false;
+            }
+
+            boolean success = adminDAO.processCheckOut(conn, reservationId);
+            if (!success) {
+                conn.rollback();
+                return false;
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); } catch (SQLException ignored) {} conn.close(); }
+        }
+    }
+
+    public List<ReservationDetail> getConfirmedNotCheckedIn() throws SQLException {
+        return adminDAO.findConfirmedNotCheckedIn();
+    }
+
+    public List<ReservationDetail> getCheckedInReservations() throws SQLException {
+        return adminDAO.findCheckedInNoCheckout();
     }
 
     // =========================================================================
