@@ -13,6 +13,7 @@ public class ReservationDetail {
     private int studentId;
     private String studentName;
     private String studentEmail;
+    private String studentMajor;
     private String departmentName;
     private String professorName;
     private String boothName;
@@ -71,6 +72,14 @@ public class ReservationDetail {
 
     public void setStudentEmail(String studentEmail) {
         this.studentEmail = studentEmail;
+    }
+
+    public String getStudentMajor() {
+        return studentMajor;
+    }
+
+    public void setStudentMajor(String studentMajor) {
+        this.studentMajor = studentMajor;
     }
 
     public String getDepartmentName() {

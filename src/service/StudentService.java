@@ -138,6 +138,10 @@ public class StudentService {
         return studentDAO.findAvailableSlotsByBooth(boothId);
     }
 
+    public List<TimeSlot> getAllSlotsByBooth(int boothId) throws SQLException {
+        return studentDAO.findAllSlotsByBooth(boothId);
+    }
+
     // 내 예약 내역 조회
     // 학생 ID로 전체 예약 내역 조회
     public List<ReservationDetail> getMyReservations(int studentId) throws SQLException {
