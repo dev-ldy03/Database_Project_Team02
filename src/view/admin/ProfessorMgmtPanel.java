@@ -184,58 +184,42 @@ public class ProfessorMgmtPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
-                "교수 [" + name + "]을(를) 삭제하시겠습니까?",
+                "교수 [" + name + "]을(를) 삭제하시겠습니까?\n관련 예약 데이터도 함께 삭제됩니다.",
                 "교수 삭제",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
         );
-
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        try {
-            boolean ok = adminService.deleteProfessor(id);
+        if (!checkAdminPassword()) return;
 
+        try {
+            boolean ok = adminService.deleteProfessorCascade(id);
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "교수가 삭제되었습니다.",
-                        "완료",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                JOptionPane.showMessageDialog(this, "교수가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 refresh();
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "삭제 실패.",
-                        "오류",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                JOptionPane.showMessageDialog(this, "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
-
         } catch (SQLException ex) {
-            String msg = ex.getMessage() != null ? ex.getMessage() : "";
-
-            if (msg.contains("foreign key constraint fails")
-                    || msg.contains("fk_reservation_professor")
-                    || msg.contains("professor_id")) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "해당 교수에 연결된 예약 데이터가 있어 삭제할 수 없습니다.\n" +
-                                "먼저 관련 예약 정보를 취소하거나 다른 교수로 변경해주세요.",
-                        "삭제 불가",
-                        JOptionPane.WARNING_MESSAGE
-                );
-
-            } else {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "오류: " + ex.getMessage(),
-                        "오류",
-                        JOptionPane.ERROR_MESSAGE
-                );
-            }
+            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private boolean checkAdminPassword() {
+        JPasswordField pwField = new JPasswordField(16);
+        pwField.setFont(UIConstants.f(Font.PLAIN, 14));
+        JPanel panel = new JPanel(new BorderLayout(0, 8));
+        panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
+        panel.add(pwField, BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(
+                this, panel, "관리자 인증",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+        if (result != JOptionPane.OK_OPTION) return false;
+        if ("ewha1886".equals(new String(pwField.getPassword()))) return true;
+        JOptionPane.showMessageDialog(this, "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+        return false;
     }
 
     private void showFormDialog(Professor prof) {

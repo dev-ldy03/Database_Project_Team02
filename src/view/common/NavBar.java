@@ -76,7 +76,7 @@ public class NavBar extends JPanel {
         p.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 24));
 
         if (LANDING.equals(type)) {
-        } else { // STUDENT
+        } else {
             p.add(navLink("홈", MainFrame.STUDENT_HOME));
             p.add(Box.createHorizontalStrut(64));
 

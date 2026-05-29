@@ -35,7 +35,7 @@ public class BoothTimeSlotPanel extends JPanel {
     private final JPanel contentCard = new JPanel(contentLayout);
 
     private static final String[] BOOTH_COLS = {
-            "ID", "부스명", "소속 학과", "유형", "예약/정원", "", ""
+            "ID", "부스명", "소속 학과", "유형", "정원", "", ""
     };
 
     private static final int[] BOOTH_WIDTHS = {
@@ -54,7 +54,7 @@ public class BoothTimeSlotPanel extends JPanel {
     private JTextField boothSearch;
 
     private static final String[] SLOT_COLS = {
-            "ID", "부스", "날짜", "시작 시간", "종료 시간", "최대 예약", "", ""
+            "ID", "부스", "날짜", "시작 시간", "종료 시간", "예약 현황", "", ""
     };
 
     private static final int[] SLOT_WIDTHS = {
@@ -64,6 +64,7 @@ public class BoothTimeSlotPanel extends JPanel {
     private DefaultTableModel slotModel;
     private JTable slotTable;
     private List<TimeSlot> allSlots;
+    private List<String[]> allBoothStats;
     private JTextField slotSearch;
 
     public BoothTimeSlotPanel() {
@@ -435,44 +436,42 @@ public class BoothTimeSlotPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
-                "부스 [" + name + "]을(를) 삭제하시겠습니까?",
+                "부스 [" + name + "]을(를) 삭제하시겠습니까?\n관련 시간대, 예약, 교수 데이터도 함께 삭제됩니다.",
                 "부스 삭제",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
         );
-
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        try {
-            boolean ok = adminService.deleteBooth(id);
+        if (!checkAdminPassword()) return;
 
+        try {
+            boolean ok = adminService.deleteBoothCascade(id);
             if (ok) {
                 JOptionPane.showMessageDialog(this, "부스가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 refreshBooths();
             } else {
                 JOptionPane.showMessageDialog(this, "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
-
         } catch (SQLException ex) {
-            String msg = ex.getMessage() != null ? ex.getMessage() : "";
-
-            if (msg.contains("foreign key constraint fails")
-                    || msg.contains("booth_id")
-                    || msg.contains("fk_timeslot_booth")
-                    || msg.contains("fk_reservation_booth")) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "해당 부스에 연결된 시간대 또는 예약 데이터가 있어 삭제할 수 없습니다.\n" +
-                                "먼저 관련 시간대/예약 정보를 삭제하거나 다른 부스로 이동해주세요.",
-                        "삭제 불가",
-                        JOptionPane.WARNING_MESSAGE
-                );
-
-            } else {
-                JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private boolean checkAdminPassword() {
+        JPasswordField pwField = new JPasswordField(16);
+        pwField.setFont(UIConstants.f(Font.PLAIN, 14));
+        JPanel panel = new JPanel(new BorderLayout(0, 8));
+        panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
+        panel.add(pwField, BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(
+                this, panel, "관리자 인증",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+        if (result != JOptionPane.OK_OPTION) return false;
+        if ("ewha1886".equals(new String(pwField.getPassword()))) return true;
+        JOptionPane.showMessageDialog(this, "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+        return false;
     }
 
     private void applyBoothFilter() {
@@ -491,8 +490,7 @@ public class BoothTimeSlotPanel extends JPanel {
                     || boothType.toLowerCase().contains(q);
 
             if (match) {
-                int reservedCount = reservationCountByBoothName(b.getBoothName());
-                String capacityText = reservedCount + "/" + b.getCapacity();
+                String capacityText = String.valueOf(b.getCapacity());
 
                 boothModel.addRow(new Object[]{
                         b.getBoothId(),
@@ -622,7 +620,7 @@ public class BoothTimeSlotPanel extends JPanel {
     private void showSlotForm(TimeSlot slot) {
         boolean isEdit = slot != null;
 
-        JDialog dialog = dialog(isEdit ? "시간대 수정" : "+ 시간대 추가", 440, 500);
+        JDialog dialog = dialog(isEdit ? "시간대 수정" : "+ 시간대 추가", 440, 530);
 
         JPanel panel = formPanel();
 
@@ -657,8 +655,28 @@ public class BoothTimeSlotPanel extends JPanel {
         startField.setToolTipText("HH:MM");
         endField.setToolTipText("HH:MM");
 
+        JLabel capHint = new JLabel(" ");
+        capHint.setFont(UIConstants.f(Font.PLAIN, 11));
+        capHint.setForeground(UIConstants.TEXT_SECONDARY);
+        capHint.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        Runnable updateCapHint = () -> {
+            int idx = boothCombo.getSelectedIndex();
+            if (idx > 0 && allBooths != null && idx - 1 < allBooths.size()) {
+                int cap = allBooths.get(idx - 1).getCapacity();
+                capHint.setText("부스 정원: " + cap + "명  (최대 예약 수는 정원 이하여야 합니다)");
+            } else {
+                capHint.setText(" ");
+            }
+        };
+
+        boothCombo.addActionListener(e -> updateCapHint.run());
+        updateCapHint.run();
+
         panel.add(labeledCombo("부스 *", boothCombo));
-        panel.add(vgap(12));
+        panel.add(vgap(4));
+        panel.add(capHint);
+        panel.add(vgap(8));
         panel.add(labeledInput("날짜 *", dateField));
         panel.add(vgap(12));
         panel.add(labeledInput("시작 시간 *", startField));
@@ -685,23 +703,32 @@ public class BoothTimeSlotPanel extends JPanel {
                 return;
             }
 
+            int maxReservations = 1;
+            try {
+                maxReservations = Integer.parseInt(maxField.getText().trim());
+            } catch (NumberFormatException ignored) {}
+
+            int selectedIdx = boothCombo.getSelectedIndex() - 1;
+            int boothCapacity = allBooths.get(selectedIdx).getCapacity();
+            if (maxReservations > boothCapacity) {
+                warn(dialog, "최대 예약 수(" + maxReservations + ")가 부스 정원(" + boothCapacity + "명)을 초과합니다.");
+                return;
+            }
+
             try {
                 Date date = Date.valueOf(dateStr);
                 Time startTime = Time.valueOf(startStr.length() == 5 ? startStr + ":00" : startStr);
                 Time endTime = Time.valueOf(endStr.length() == 5 ? endStr + ":00" : endStr);
 
-                int maxReservations = 1;
-                try {
-                    maxReservations = Integer.parseInt(maxField.getText().trim());
-                } catch (NumberFormatException ignored) {}
-
-                int boothId = allBooths.get(boothCombo.getSelectedIndex() - 1).getBoothId();
+                int boothId = allBooths.get(selectedIdx).getBoothId();
 
                 if (isEdit) {
-                    adminService.updateTimeSlot(slot.getSlotId(), boothId, date, startTime, endTime, maxReservations);
+                    boolean ok = adminService.updateTimeSlot(slot.getSlotId(), boothId, date, startTime, endTime, maxReservations);
+                    if (!ok) { warn(dialog, "시간대 수정에 실패했습니다."); return; }
                     JOptionPane.showMessageDialog(dialog, "시간대가 수정되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    adminService.addTimeSlot(boothId, date, startTime, endTime, maxReservations);
+                    int newId = adminService.addTimeSlot(boothId, date, startTime, endTime, maxReservations);
+                    if (newId == -1) { warn(dialog, "시간대 추가에 실패했습니다."); return; }
                     JOptionPane.showMessageDialog(dialog, "시간대가 추가되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 }
 
@@ -709,7 +736,9 @@ public class BoothTimeSlotPanel extends JPanel {
                 refreshSlots();
 
             } catch (IllegalArgumentException iae) {
-                warn(dialog, "날짜/시간 형식이 올바르지 않습니다.\n날짜: YYYY-MM-DD, 시간: HH:MM");
+                String msg = iae.getMessage() != null ? iae.getMessage()
+                        : "날짜/시간 형식이 올바르지 않습니다.\n날짜: YYYY-MM-DD, 시간: HH:MM";
+                warn(dialog, msg);
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(dialog, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
             }
@@ -780,13 +809,14 @@ public class BoothTimeSlotPanel extends JPanel {
                     || date.contains(q);
 
             if (match) {
+                int current = findCurrentReservations(boothName, date, s.getStartTime());
                 slotModel.addRow(new Object[]{
                         s.getSlotId(),
                         boothName,
                         date,
                         s.getStartTime() != null ? s.getStartTime().toString().substring(0, 5) : "",
                         s.getEndTime() != null ? s.getEndTime().toString().substring(0, 5) : "",
-                        s.getMaxReservations(),
+                        current + "/" + s.getMaxReservations(),
                         "",
                         ""
                 });
@@ -798,12 +828,23 @@ public class BoothTimeSlotPanel extends JPanel {
         try {
             allBooths = adminService.getAllBooths();
             allSlots = adminService.getAllTimeSlots();
-
+            allBoothStats = adminService.getBoothScheduleStats();
             applySlotFilter();
-
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private int findCurrentReservations(String boothName, String date, java.sql.Time startTime) {
+        if (allBoothStats == null || startTime == null) return 0;
+        String startStr = startTime.toString().substring(0, 5);
+        for (String[] stat : allBoothStats) {
+            if (stat[0].equals(boothName) && stat[2].equals(date)
+                    && stat[3].length() >= 5 && stat[3].substring(0, 5).equals(startStr)) {
+                try { return Integer.parseInt(stat[6]); } catch (Exception ignored) { return 0; }
+            }
+        }
+        return 0;
     }
 
     public void showBooth() {

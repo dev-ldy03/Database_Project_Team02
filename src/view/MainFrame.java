@@ -105,7 +105,6 @@ public class MainFrame extends JFrame {
         cardLayout.show(cardPanel, LANDING);
     }
 
-    /* ── Static navigate ── */
     public static void navigate(String panel) {
         if (instance == null) return;
         try {
@@ -136,14 +135,13 @@ public class MainFrame extends JFrame {
                     instance.adminBoothSlotPanel.showBooth(); break;
                 case ADMIN_TIMESLOT:
                     instance.adminBoothSlotPanel.showTimeSlot();
-                    panel = ADMIN_BOOTH; // 같은 카드 사용
+                    panel = ADMIN_BOOTH;
                     break;
             }
         } catch (Exception ignored) {}
         instance.cardLayout.show(instance.cardPanel, panel);
     }
 
-    /* ── Session getters/setters ── */
     public static int    getStudentId()    { return studentId; }
     public static String getStudentName()  { return studentName; }
     public static String getStudentEmail() { return studentEmail; }
@@ -152,7 +150,6 @@ public class MainFrame extends JFrame {
         studentId = id; studentName = name; studentEmail = email;
     }
 
-    /* ── Context getters/setters ── */
     public static int    getSelectedDeptId()    { return selectedDeptId; }
     public static String getSelectedDeptName()  { return selectedDeptName; }
     public static int    getSelectedSlotId()    { return selectedSlotId; }
@@ -181,7 +178,6 @@ public class MainFrame extends JFrame {
         selectedReservation = rd;
     }
 
-    /* ── Entry point ── */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {

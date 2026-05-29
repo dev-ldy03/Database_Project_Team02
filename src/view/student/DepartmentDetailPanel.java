@@ -4,6 +4,7 @@ import DB2026Team02.model.ConsultationBooth;
 import DB2026Team02.model.Professor;
 import DB2026Team02.model.TimeSlot;
 import DB2026Team02.service.StudentService;
+import DB2026Team02.service.ReservationService;
 import DB2026Team02.view.MainFrame;
 import DB2026Team02.view.common.*;
 
@@ -108,13 +109,14 @@ public class DepartmentDetailPanel extends JPanel {
     }
 
     private JPanel buildContent() {
-        JPanel content = new JPanel(new GridLayout(1, 2, 20, 0));
+        JPanel content = new JPanel(new BorderLayout(20, 0));
         content.setBackground(UIConstants.BG);
         content.setBorder(BorderFactory.createEmptyBorder(20, 80, 20, 80));
 
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setOpaque(false);
+        left.setPreferredSize(new Dimension(300, 0));
 
         profListPanel = new JPanel();
         profListPanel.setLayout(new BoxLayout(profListPanel, BoxLayout.Y_AXIS));
@@ -128,8 +130,8 @@ public class DepartmentDetailPanel extends JPanel {
         left.add(Box.createVerticalStrut(16));
         left.add(buildSection("상담 부스", boothListPanel));
 
-        content.add(left);
-        content.add(buildSlotPanel());
+        content.add(left, BorderLayout.WEST);
+        content.add(buildSlotPanel(), BorderLayout.CENTER);
 
         return content;
     }
@@ -215,8 +217,8 @@ public class DepartmentDetailPanel extends JPanel {
     }
 
     private void styleSlotTable(JTable t) {
-        t.setFont(UIConstants.f(Font.PLAIN, 13));
-        t.setRowHeight(54);
+        t.setFont(UIConstants.f(Font.PLAIN, 12));
+        t.setRowHeight(46);
         t.setShowVerticalLines(false);
         t.setGridColor(UIConstants.BORDER);
         t.setBackground(UIConstants.WHITE);
@@ -324,14 +326,16 @@ public class DepartmentDetailPanel extends JPanel {
             }
         });
 
-        int[] widths = {100, 140, 160, 80, 110, 100};
+        t.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        int[] widths = {95, 125, 160, 55, 90, 85};
 
         for (int i = 0; i < widths.length; i++) {
             t.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
 
-        t.getColumnModel().getColumn(5).setMinWidth(90);
-        t.getColumnModel().getColumn(5).setMaxWidth(110);
+        t.getColumnModel().getColumn(5).setMinWidth(80);
+        t.getColumnModel().getColumn(5).setMaxWidth(100);
     }
 
     private Professor chooseProfessorForReservation() {
@@ -344,7 +348,7 @@ public class DepartmentDetailPanel extends JPanel {
 
         for (int i = 0; i < currentProfessors.size(); i++) {
             Professor p = currentProfessors.get(i);
-            options[i] = p.getProfessorName() + " 교수";
+            options[i] = p.getProfessorName();
         }
 
         String selected = (String) JOptionPane.showInputDialog(
@@ -360,7 +364,7 @@ public class DepartmentDetailPanel extends JPanel {
         if (selected == null) return null;
 
         for (Professor p : currentProfessors) {
-            if (selected.equals(p.getProfessorName() + " 교수")) {
+            if (selected.equals(p.getProfessorName())) {
                 return p;
             }
         }
@@ -426,7 +430,7 @@ public class DepartmentDetailPanel extends JPanel {
         initial.setPreferredSize(new Dimension(36, 36));
         initial.setOpaque(false);
 
-        JLabel nameLabel = new JLabel(p.getProfessorName() + " 교수");
+        JLabel nameLabel = new JLabel(p.getProfessorName());
         nameLabel.setFont(UIConstants.f(Font.BOLD, 13));
         nameLabel.setForeground(UIConstants.TEXT_PRIMARY);
 
@@ -519,11 +523,8 @@ public class DepartmentDetailPanel extends JPanel {
             List<TimeSlot> allSlots = new ArrayList<>();
 
             for (ConsultationBooth booth : currentBooths) {
-                List<TimeSlot> slots = svc.getAvailableSlotsByBooth(booth.getBoothId());
-
-                if (slots != null) {
-                    allSlots.addAll(slots);
-                }
+                List<TimeSlot> slots = svc.getAllSlotsByBooth(booth.getBoothId());
+                if (slots != null) allSlots.addAll(slots);
             }
 
             allSlots.sort((a, b) -> {
@@ -531,6 +532,8 @@ public class DepartmentDetailPanel extends JPanel {
                 if (dateCompare != 0) return dateCompare;
                 return String.valueOf(a.getStartTime()).compareTo(String.valueOf(b.getStartTime()));
             });
+
+            ReservationService reservationService = new ReservationService();
 
             for (TimeSlot s : allSlots) {
                 ConsultationBooth booth = boothMap.get(s.getBoothId());
@@ -540,12 +543,15 @@ public class DepartmentDetailPanel extends JPanel {
                 String time = formatTime(s);
                 String capacity = s.getMaxReservations() + "명";
 
+                boolean available = reservationService.isSlotAvailable(s.getSlotId());
+                String status = available ? "예약 가능" : "마감";
+
                 slotModel.addRow(new Object[]{
                         date,
                         time,
                         boothName,
                         capacity,
-                        "예약 가능",
+                        status,
                         ""
                 });
 

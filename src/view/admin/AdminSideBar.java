@@ -65,7 +65,7 @@ public class AdminSideBar extends JPanel {
         p.add(navItem("체크인 처리",  MainFrame.ADMIN_CHECKIN));
         p.add(navItem("학과 관리",    MainFrame.ADMIN_DEPT));
         p.add(navItem("교수 관리",    MainFrame.ADMIN_PROF));
-        p.add(navItem("부스/시간대",  MainFrame.ADMIN_BOOTH));
+        p.add(navItem("부스/시간대 관리",  MainFrame.ADMIN_BOOTH));
         p.add(Box.createVerticalGlue());
 
         return p;

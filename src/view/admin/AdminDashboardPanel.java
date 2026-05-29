@@ -21,6 +21,7 @@ public class AdminDashboardPanel extends JPanel {
     private JLabel totalLbl, confirmedLbl, pendingLbl, cancelledLbl, completedLbl;
     private JPanel chartArea;
     private JPanel recentList;
+    private JPanel statusCard;
 
     public AdminDashboardPanel() {
         setLayout(new BorderLayout());
@@ -79,6 +80,18 @@ public class AdminDashboardPanel extends JPanel {
         mid.add(chartArea);
         mid.add(recentList);
         body.add(mid, BorderLayout.CENTER);
+
+        statusCard = new JPanel(new BorderLayout());
+        statusCard.setBackground(UIConstants.WHITE);
+        statusCard.setBorder(new CompoundBorder(
+                new LineBorder(UIConstants.BORDER),
+                BorderFactory.createEmptyBorder(16, 20, 12, 20)
+        ));
+        JPanel southWrap = new JPanel(new BorderLayout());
+        southWrap.setOpaque(false);
+        southWrap.setBorder(BorderFactory.createEmptyBorder(16, 0, 0, 0));
+        southWrap.add(statusCard);
+        body.add(southWrap, BorderLayout.SOUTH);
 
         return body;
     }
@@ -342,7 +355,7 @@ public class AdminDashboardPanel extends JPanel {
             nameLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel deptLbl = new JLabel(
-                    "예약학과: " + (r.getDepartmentName() != null ? r.getDepartmentName() : "")
+                    "부스: " + (r.getBoothName() != null ? r.getBoothName() : "")
             );
             deptLbl.setFont(UIConstants.f(Font.PLAIN, 11));
             deptLbl.setForeground(UIConstants.TEXT_MUTED);
@@ -402,6 +415,85 @@ public class AdminDashboardPanel extends JPanel {
         recentList.repaint();
     }
 
+    private void refreshStatusBar(List<String[]> statusStats) {
+        statusCard.removeAll();
+
+        JLabel title = new JLabel("상태별 예약 비율");
+        title.setFont(UIConstants.f(Font.BOLD, 13));
+        title.setForeground(UIConstants.TEXT_PRIMARY);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        statusCard.add(title, BorderLayout.NORTH);
+
+        int total = 0;
+        for (String[] s : statusStats) {
+            try { total += Integer.parseInt(s[1]); } catch (Exception ignored) {}
+        }
+        final int finalTotal = Math.max(total, 1);
+
+        JPanel bar = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(229, 231, 235));
+                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.setClip(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                int x = 0;
+                for (String[] s : statusStats) {
+                    int cnt = 0;
+                    try { cnt = Integer.parseInt(s[1]); } catch (Exception ignored) {}
+                    if (cnt == 0) continue;
+                    int w = (int)((double) cnt / finalTotal * getWidth());
+                    g2.setColor(statusColor(s[0]));
+                    g2.fillRect(x, 0, w, getHeight());
+                    x += w;
+                }
+                g2.dispose();
+            }
+        };
+        bar.setPreferredSize(new Dimension(0, 18));
+        bar.setOpaque(false);
+        statusCard.add(bar, BorderLayout.CENTER);
+
+        JPanel legend = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 0));
+        legend.setOpaque(false);
+        legend.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+
+        for (String[] s : statusStats) {
+            int cnt = 0;
+            try { cnt = Integer.parseInt(s[1]); } catch (Exception ignored) {}
+            int pct = (int)((double) cnt / finalTotal * 100);
+
+            JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+            item.setOpaque(false);
+
+            JLabel dot = new JLabel("●");
+            dot.setFont(UIConstants.f(Font.PLAIN, 11));
+            dot.setForeground(statusColor(s[0]));
+
+            JLabel lbl = new JLabel("  " + s[0] + "  " + cnt + "건 (" + pct + "%)");
+            lbl.setFont(UIConstants.f(Font.PLAIN, 11));
+            lbl.setForeground(UIConstants.TEXT_SECONDARY);
+
+            item.add(dot);
+            item.add(lbl);
+            legend.add(item);
+        }
+
+        statusCard.add(legend, BorderLayout.SOUTH);
+        statusCard.revalidate();
+        statusCard.repaint();
+    }
+
+    private Color statusColor(String status) {
+        switch (status) {
+            case "PENDING":   return UIConstants.PENDING_FG;
+            case "CONFIRMED": return UIConstants.CONFIRMED_FG;
+            case "COMPLETED": return new Color(124, 58, 237);
+            case "CANCELLED": return UIConstants.DANGER;
+            default:          return Color.GRAY;
+        }
+    }
+
     public void refresh() {
         try {
             int[] stats = adminService.getOverallStats();
@@ -416,6 +508,9 @@ public class AdminDashboardPanel extends JPanel {
 
             List<ReservationDetail> all = adminService.getAllReservationDetails();
             refreshRecent(all);
+
+            List<String[]> statusStats = adminService.getReservationStatsByStatus();
+            refreshStatusBar(statusStats);
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,

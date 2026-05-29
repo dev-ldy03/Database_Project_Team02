@@ -24,19 +24,19 @@ public class ReservationListPanel extends JPanel {
     private static final int COL_ID     = 0;
     private static final int COL_NAME   = 1;
     private static final int COL_DEPT   = 2;
-    private static final int COL_PROF   = 3;
-    private static final int COL_DATE   = 4;
-    private static final int COL_TIME   = 5;
-    private static final int COL_BOOTH  = 6;
+    private static final int COL_BOOTH  = 3;
+    private static final int COL_PROF   = 4;
+    private static final int COL_DATE   = 5;
+    private static final int COL_TIME   = 6;
     private static final int COL_STATUS = 7;
     private static final int COL_ACTION = 8;
 
     private static final String[] COLS = {
-            "ID", "학생명", "예약학과", "교수", "날짜", "시간", "부스", "상태", "작업"
+            "ID", "학생명", "학생 학과", "부스", "교수", "날짜", "시간", "상태", "작업"
     };
 
     private static final int[] WIDTHS = {
-            55, 80, 115, 80, 95, 105, 120, 95, 150
+            55, 80, 115, 120, 80, 95, 105, 95, 80
     };
 
     private final AdminService adminService = new AdminService();
@@ -47,6 +47,11 @@ public class ReservationListPanel extends JPanel {
     private List<ReservationDetail> allData = new ArrayList<>();
 
     private JLabel totalCountLbl;
+
+    // 상태별 / 부스별 예약 조회용 필터
+    private JComboBox<String> statusFilter;
+    private JComboBox<String> boothFilter;
+    private boolean updatingFilter = false;
 
     public ReservationListPanel() {
         setLayout(new BorderLayout());
@@ -86,7 +91,8 @@ public class ReservationListPanel extends JPanel {
         totalCountLbl.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
 
         JPanel badge = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(UIConstants.PRIMARY);
@@ -102,7 +108,34 @@ public class ReservationListPanel extends JPanel {
         left.add(title);
         left.add(badge);
 
-        GreenButton exportBtn = new GreenButton("↓ 내보내기", new Color(71, 85, 105), new Color(51, 65, 85));
+        // 예약 상태 / 부스 기준 필터
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        filterPanel.setOpaque(false);
+
+        statusFilter = new JComboBox<>(new String[]{
+                "상태 전체", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"
+        });
+        statusFilter.setFont(UIConstants.f(Font.PLAIN, 12));
+        statusFilter.setPreferredSize(new Dimension(125, 32));
+
+        boothFilter = new JComboBox<>();
+        boothFilter.setFont(UIConstants.f(Font.PLAIN, 12));
+        boothFilter.setPreferredSize(new Dimension(180, 32));
+
+        statusFilter.addActionListener(e -> {
+            if (!updatingFilter) applyFilters();
+        });
+
+        boothFilter.addActionListener(e -> {
+            if (!updatingFilter) applyFilters();
+        });
+
+        filterPanel.add(statusFilter);
+        filterPanel.add(boothFilter);
+
+        left.add(filterPanel);
+
+        GreenButton exportBtn = new GreenButton("내보내기", new Color(71, 85, 105), new Color(51, 65, 85));
         exportBtn.setFont(UIConstants.f(Font.BOLD, 12));
         exportBtn.setPreferredSize(new Dimension(96, 32));
         exportBtn.addActionListener(e -> exportCsv());
@@ -126,7 +159,8 @@ public class ReservationListPanel extends JPanel {
         ));
 
         tableModel = new DefaultTableModel(COLS, 0) {
-            @Override public boolean isCellEditable(int r, int c) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
                 return false;
             }
         };
@@ -163,7 +197,8 @@ public class ReservationListPanel extends JPanel {
         hdr.setPreferredSize(new Dimension(hdr.getPreferredSize().width, 36));
 
         DefaultTableCellRenderer base = new DefaultTableCellRenderer() {
-            @Override public Component getTableCellRendererComponent(
+            @Override
+            public Component getTableCellRendererComponent(
                     JTable t, Object v, boolean sel, boolean foc, int row, int col
             ) {
                 JLabel l = (JLabel) super.getTableCellRendererComponent(t, v, false, false, row, col);
@@ -213,36 +248,25 @@ public class ReservationListPanel extends JPanel {
         table.getColumnModel().getColumn(COL_ACTION).setCellRenderer((t, v, sel, foc, row, col) -> {
             JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 10));
             wrap.setBackground(UIConstants.WHITE);
-
             wrap.add(actionBtn("취소", UIConstants.DANGER));
-            wrap.add(actionBtn("삭제", new Color(127, 29, 29)));
-
             return wrap;
         });
 
         table.addMouseListener(new MouseAdapter() {
-            @Override public void mousePressed(MouseEvent e) {
+            @Override
+            public void mousePressed(MouseEvent e) {
                 int row = table.rowAtPoint(e.getPoint());
                 int col = table.columnAtPoint(e.getPoint());
-
                 if (row < 0 || col != COL_ACTION) return;
-
-                Rectangle cellRect = table.getCellRect(row, COL_ACTION, false);
-                int relativeX = e.getX() - cellRect.x;
-                boolean leftButton = relativeX < cellRect.width / 2;
-
-                if (leftButton) {
-                    doCancel(row);
-                } else {
-                    doDelete(row);
-                }
+                doCancel(row);
             }
         });
     }
 
     private JButton actionBtn(String text, Color color) {
         JButton b = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -332,71 +356,89 @@ public class ReservationListPanel extends JPanel {
         }
     }
 
-    private void doDelete(int row) {
-        int id = parseId(tableModel.getValueAt(row, COL_ID).toString());
-
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "예약 #" + id + "을(를) 완전히 삭제하시겠습니까?\n" +
-                        "삭제 후에는 복구할 수 없습니다.",
-                "예약 삭제",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        if (confirm != JOptionPane.YES_OPTION) return;
-
-        try {
-            boolean ok = resvService.deleteReservation(id);
-
-            if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "예약 #" + id + " 삭제 완료.",
-                        "완료",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                refresh();
-            } else {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "예약 삭제 실패.",
-                        "오류",
-                        JOptionPane.ERROR_MESSAGE
-                );
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "오류: " + ex.getMessage(),
-                    "오류",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
+    private void loadAllReservations() {
+        updateBoothFilterItems();
+        applyFilters();
     }
 
-    private void loadAllReservations() {
+    // 상태별 / 부스별 예약 목록 필터링
+    private void applyFilters() {
+        if (tableModel == null) return;
+
         tableModel.setRowCount(0);
+
+        String selectedStatus = statusFilter == null || statusFilter.getSelectedItem() == null
+                ? "상태 전체"
+                : statusFilter.getSelectedItem().toString();
+
+        String selectedBooth = boothFilter == null || boothFilter.getSelectedItem() == null
+                ? "부스 전체"
+                : boothFilter.getSelectedItem().toString();
+
+        int count = 0;
 
         for (ReservationDetail r : allData) {
             String status = r.getStatus() != null ? r.getStatus() : "";
+            String boothName = r.getBoothName() != null ? r.getBoothName() : "";
+
+            if (!"상태 전체".equals(selectedStatus) && !selectedStatus.equals(status)) {
+                continue;
+            }
+
+            if (!"부스 전체".equals(selectedBooth) && !selectedBooth.equals(boothName)) {
+                continue;
+            }
 
             tableModel.addRow(new Object[]{
                     "#" + r.getReservationId(),
                     r.getStudentName() != null ? r.getStudentName() : "",
-                    r.getDepartmentName() != null ? r.getDepartmentName() : "",
+                    r.getStudentMajor() != null ? r.getStudentMajor() : "",
+                    boothName,
                     r.getProfessorName() != null ? r.getProfessorName() : "",
                     r.getSlotDate() != null ? r.getSlotDate().toString() : "",
                     timeRange(r),
-                    r.getBoothName() != null ? r.getBoothName() : "",
                     status,
                     ""
             });
+
+            count++;
         }
 
         if (totalCountLbl != null) {
-            totalCountLbl.setText(String.valueOf(allData.size()));
+            totalCountLbl.setText(String.valueOf(count));
         }
+    }
+
+    private void updateBoothFilterItems() {
+        if (boothFilter == null) return;
+
+        updatingFilter = true;
+
+        String selected = boothFilter.getSelectedItem() == null
+                ? "부스 전체"
+                : boothFilter.getSelectedItem().toString();
+
+        boothFilter.removeAllItems();
+        boothFilter.addItem("부스 전체");
+
+        List<String> boothNames = new ArrayList<>();
+
+        for (ReservationDetail r : allData) {
+            String boothName = r.getBoothName();
+
+            if (boothName != null && !boothName.isBlank() && !boothNames.contains(boothName)) {
+                boothNames.add(boothName);
+                boothFilter.addItem(boothName);
+            }
+        }
+
+        if (boothNames.contains(selected)) {
+            boothFilter.setSelectedItem(selected);
+        } else {
+            boothFilter.setSelectedItem("부스 전체");
+        }
+
+        updatingFilter = false;
     }
 
     private String timeRange(ReservationDetail r) {
