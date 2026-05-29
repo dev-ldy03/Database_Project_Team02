@@ -164,6 +164,7 @@ SELECT
     s.student_id,
     s.student_name,
     s.email           AS student_email,
+    s.major           AS student_major,
     d.department_name,
     p.professor_name,
     b.booth_name,
@@ -247,7 +248,7 @@ INSERT INTO RESERVATION (student_id, slot_id, professor_id, booth_id, status) VA
     (1, 1, 1, 1, 'CONFIRMED'),
     (2, 2, 3, 2, 'CONFIRMED'),
     (3, 1, 2, 1, 'PENDING'),
-    (4, 2, 4, 2, 'CANCELLED'),
+    (4, 2, 3, 2, 'CANCELLED'),
     (5, 1, 1, 1, 'COMPLETED');
 
 -- CHECK_IN_RECORD (COMPLETED 상태인 예약에 대해)

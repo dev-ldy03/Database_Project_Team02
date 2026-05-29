@@ -422,7 +422,7 @@ public class MakeReservationPanel extends JPanel {
 
             for (Professor p : professors) {
                 if (p.getProfessorId() == selectedProfId) {
-                    lblProf.setText(p.getProfessorName() + " 교수");
+                    lblProf.setText(p.getProfessorName());
                     return;
                 }
             }

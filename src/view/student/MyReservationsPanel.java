@@ -479,8 +479,7 @@ public class MyReservationsPanel extends JPanel {
 
     private String formatProfessorName(String name) {
         if (name == null || name.isBlank()) return "";
-        if (name.endsWith("교수")) return name;
-        return name + " 교수";
+        return name;
     }
 
     private String formatTimeRange(ReservationDetail r) {
