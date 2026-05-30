@@ -341,13 +341,6 @@ public class StudentRegisterPanel extends JPanel {
                     student.getEmail()
             );
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "환영합니다, " + student.getStudentName() + " 님!",
-                    "등록 완료",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
             MainFrame.navigate(MainFrame.STUDENT_HOME);
 
         } catch (SQLException ex) {
