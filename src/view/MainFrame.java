@@ -138,7 +138,7 @@ public class MainFrame extends JFrame {
                     panel = ADMIN_BOOTH;
                     break;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ex) {ex.printStackTrace();}
         instance.cardLayout.show(instance.cardPanel, panel);
     }
 

@@ -168,14 +168,20 @@ public class StudentHomePanel extends JPanel {
             }
         };
 
-        card.addMouseListener(nav);
-        top.addMouseListener(nav);
-        arrow.addMouseListener(nav);
-        info.addMouseListener(nav);
-        tLabel.addMouseListener(nav);
-        dLabel.addMouseListener(nav);
+        addClickListenerRecursively(card, nav);
 
         return card;
+    }
+
+    private void addClickListenerRecursively(Component component, MouseListener listener) {
+        component.addMouseListener(listener);
+        component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        if (component instanceof Container container) {
+            for (Component child : container.getComponents()) {
+                addClickListenerRecursively(child, listener);
+            }
+        }
     }
 
     private JPanel buildRecentTable() {

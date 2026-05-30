@@ -285,7 +285,8 @@ public class DepartmentDetailPanel extends JPanel {
 
             if ("예약 가능".equals(slotModel.getValueAt(row, 4))) {
                 GreenButton btn = new GreenButton("예약");
-                btn.setPreferredSize(new Dimension(76, 32));
+                btn.setFont(UIConstants.f(Font.BOLD, 12));
+                btn.setPreferredSize(new Dimension(66, 30));
                 wrapper.add(btn);
             }
 
@@ -328,14 +329,14 @@ public class DepartmentDetailPanel extends JPanel {
 
         t.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        int[] widths = {95, 125, 160, 55, 90, 85};
+        int[] widths = {95, 120, 210, 55, 90, 70};
 
         for (int i = 0; i < widths.length; i++) {
             t.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
 
-        t.getColumnModel().getColumn(5).setMinWidth(80);
-        t.getColumnModel().getColumn(5).setMaxWidth(100);
+        t.getColumnModel().getColumn(5).setMinWidth(64);
+        t.getColumnModel().getColumn(5).setMaxWidth(74);
     }
 
     private Professor chooseProfessorForReservation() {
@@ -474,22 +475,25 @@ public class DepartmentDetailPanel extends JPanel {
     }
 
     private JPanel buildBoothRow(ConsultationBooth b) {
-        JPanel row = new JPanel(new BorderLayout(12, 0));
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
         row.setOpaque(false);
 
         row.setBorder(new CompoundBorder(
                 new LineBorder(UIConstants.BORDER, 1, true),
-                BorderFactory.createEmptyBorder(12, 14, 12, 14)
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)
         ));
 
-        row.setMaximumSize(new Dimension(Short.MAX_VALUE, 58));
+        row.setMaximumSize(new Dimension(Short.MAX_VALUE, 74));
 
         JLabel name = new JLabel(b.getBoothName());
         name.setFont(UIConstants.f(Font.BOLD, 13));
         name.setForeground(UIConstants.TEXT_PRIMARY);
+        name.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        right.setOpaque(false);
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        bottom.setOpaque(false);
+        bottom.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StatusBadge typeBadge = new StatusBadge(b.getBoothType());
 
@@ -497,11 +501,12 @@ public class DepartmentDetailPanel extends JPanel {
         cap.setFont(UIConstants.f(Font.PLAIN, 12));
         cap.setForeground(UIConstants.TEXT_MUTED);
 
-        right.add(typeBadge);
-        right.add(cap);
+        bottom.add(typeBadge);
+        bottom.add(cap);
 
-        row.add(name, BorderLayout.CENTER);
-        row.add(right, BorderLayout.EAST);
+        row.add(name);
+        row.add(Box.createVerticalStrut(8));
+        row.add(bottom);
 
         return row;
     }

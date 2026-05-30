@@ -81,7 +81,15 @@ public class CheckInPanel extends JPanel {
         c.setBackground(UIConstants.BG);
 
         c.add(buildTitleBar(), BorderLayout.NORTH);
-        c.add(buildBody(), BorderLayout.CENTER);
+
+        JScrollPane bodyScroll = new JScrollPane(buildBody());
+        bodyScroll.setBorder(null);
+        bodyScroll.getViewport().setBackground(UIConstants.BG);
+        bodyScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        bodyScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        bodyScroll.getVerticalScrollBar().setUnitIncrement(16);
+
+        c.add(bodyScroll, BorderLayout.CENTER);
 
         return c;
     }
@@ -217,7 +225,9 @@ public class CheckInPanel extends JPanel {
                 new LineBorder(UIConstants.BORDER),
                 BorderFactory.createEmptyBorder(16, 20, 16, 20)
         ));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 330));
+        card.setPreferredSize(new Dimension(0, 310));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 310));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         return card;
     }

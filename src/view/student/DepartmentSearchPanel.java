@@ -55,7 +55,7 @@ public class DepartmentSearchPanel extends JPanel {
         bar.setBorder(BorderFactory.createEmptyBorder(32, 80, 16, 80));
         bar.setMaximumSize(new Dimension(Short.MAX_VALUE, 130));
 
-        JLabel title = new JLabel("학과 / 교수 검색");
+        JLabel title = new JLabel("학과 검색");
         title.setFont(UIConstants.f(Font.BOLD, 22));
         title.setForeground(UIConstants.TEXT_PRIMARY);
         bar.add(title, BorderLayout.NORTH);
@@ -67,25 +67,16 @@ public class DepartmentSearchPanel extends JPanel {
         searchField.setFont(UIConstants.f(Font.PLAIN, 14));
         searchField.setBorder(new CompoundBorder(
                 new LineBorder(UIConstants.PRIMARY, 1, true),
-                BorderFactory.createEmptyBorder(8, 36, 8, 12)
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         searchField.setBackground(UIConstants.BG);
         searchField.addActionListener(e -> doSearch());
-
-        JPanel fieldWrapper = new JPanel(new BorderLayout());
-        fieldWrapper.setOpaque(false);
-
-        JLabel searchIcon = new JLabel("  🔍  ");
-        searchIcon.setFont(UIConstants.f(Font.PLAIN, 14));
-
-        fieldWrapper.add(searchIcon, BorderLayout.WEST);
-        fieldWrapper.add(searchField, BorderLayout.CENTER);
 
         GreenButton btnSearch = new GreenButton("검색");
         btnSearch.setPreferredSize(new Dimension(90, 44));
         btnSearch.addActionListener(e -> doSearch());
 
-        row.add(fieldWrapper, BorderLayout.CENTER);
+        row.add(searchField, BorderLayout.CENTER);
         row.add(btnSearch, BorderLayout.EAST);
 
         resultCountLabel = new JLabel("");

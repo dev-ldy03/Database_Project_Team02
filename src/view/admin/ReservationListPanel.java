@@ -51,6 +51,7 @@ public class ReservationListPanel extends JPanel {
     // 상태별 / 부스별 예약 조회용 필터
     private JComboBox<String> statusFilter;
     private JComboBox<String> boothFilter;
+    private JTextField searchField;
     private boolean updatingFilter = false;
 
     public ReservationListPanel() {
@@ -112,6 +113,33 @@ public class ReservationListPanel extends JPanel {
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         filterPanel.setOpaque(false);
 
+        searchField = new JTextField();
+        searchField.setFont(UIConstants.f(Font.PLAIN, 12));
+        searchField.setPreferredSize(new Dimension(220, 32));
+        searchField.setToolTipText("학생명 / 학과 / 부스 검색");
+        searchField.setBorder(new CompoundBorder(
+                new LineBorder(UIConstants.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
+        ));
+
+        searchField.addActionListener(e -> applyFilters());
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilters();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilters();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilters();
+            }
+        });
+
         statusFilter = new JComboBox<>(new String[]{
                 "상태 전체", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"
         });
@@ -130,6 +158,12 @@ public class ReservationListPanel extends JPanel {
             if (!updatingFilter) applyFilters();
         });
 
+        JLabel searchLabel = new JLabel("학생 / 학과 / 부스 검색");
+        searchLabel.setFont(UIConstants.f(Font.PLAIN, 12));
+        searchLabel.setForeground(UIConstants.TEXT_SECONDARY);
+
+
+        filterPanel.add(searchField);
         filterPanel.add(statusFilter);
         filterPanel.add(boothFilter);
 
@@ -375,11 +409,15 @@ public class ReservationListPanel extends JPanel {
                 ? "부스 전체"
                 : boothFilter.getSelectedItem().toString();
 
+        String keyword = searchField == null ? "" : searchField.getText().trim().toLowerCase();
+
         int count = 0;
 
         for (ReservationDetail r : allData) {
             String status = r.getStatus() != null ? r.getStatus() : "";
             String boothName = r.getBoothName() != null ? r.getBoothName() : "";
+            String studentName = r.getStudentName() != null ? r.getStudentName() : "";
+            String studentMajor = r.getStudentMajor() != null ? r.getStudentMajor() : "";
 
             if (!"상태 전체".equals(selectedStatus) && !selectedStatus.equals(status)) {
                 continue;
@@ -387,6 +425,18 @@ public class ReservationListPanel extends JPanel {
 
             if (!"부스 전체".equals(selectedBooth) && !selectedBooth.equals(boothName)) {
                 continue;
+            }
+
+            if (!keyword.isBlank()) {
+                String searchable = (
+                        studentName + " " +
+                                studentMajor + " " +
+                                boothName
+                ).toLowerCase();
+
+                if (!searchable.contains(keyword)) {
+                    continue;
+                }
             }
 
             tableModel.addRow(new Object[]{

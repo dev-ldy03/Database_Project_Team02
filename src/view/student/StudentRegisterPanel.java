@@ -323,11 +323,27 @@ public class StudentRegisterPanel extends JPanel {
                 return;
             }
 
-            MainFrame.setStudent(id, name, email);
+            var student = svc.getStudentByEmail(email.trim());
+
+            if (student == null) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "학생 정보 조회에 실패했습니다. 이메일로 다시 조회해 주세요.",
+                        "조회 실패",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            MainFrame.setStudent(
+                    student.getStudentId(),
+                    student.getStudentName(),
+                    student.getEmail()
+            );
 
             JOptionPane.showMessageDialog(
                     this,
-                    "환영합니다, " + name + " 님!",
+                    "환영합니다, " + student.getStudentName() + " 님!",
                     "등록 완료",
                     JOptionPane.INFORMATION_MESSAGE
             );
