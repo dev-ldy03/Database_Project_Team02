@@ -13,6 +13,7 @@ public class ReservationDetail {
     private int studentId;
     private String studentName;
     private String studentEmail;
+    private String studentMajor;
     private String departmentName;
     private String professorName;
     private String boothName;
@@ -20,6 +21,7 @@ public class ReservationDetail {
     private Date slotDate;
     private Time startTime;
     private Time endTime;
+    private String notes;
 
     public ReservationDetail() {
     }
@@ -70,6 +72,14 @@ public class ReservationDetail {
 
     public void setStudentEmail(String studentEmail) {
         this.studentEmail = studentEmail;
+    }
+
+    public String getStudentMajor() {
+        return studentMajor;
+    }
+
+    public void setStudentMajor(String studentMajor) {
+        this.studentMajor = studentMajor;
     }
 
     public String getDepartmentName() {
@@ -127,4 +137,8 @@ public class ReservationDetail {
     public void setEndTime(Time endTime) {
         this.endTime = endTime;
     }
+
+    public String getNotes() { return notes; }
+
+    public void setNotes(String notes) { this.notes = notes; }
 }

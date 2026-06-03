@@ -46,7 +46,7 @@ public class ReservationService {
                     slotId,
                     professorId,
                     boothId,
-                    "CONFIRMED",
+                    "PENDING",
                     notes
             );
 
@@ -138,6 +138,11 @@ public class ReservationService {
                 }
             }
         }
+    }
+
+    // 예약 삭제
+    public boolean deleteReservation(int reservationId) throws SQLException {
+        return reservationDAO.deleteReservation(reservationId);
     }
 
     // 예약 ID로 예약 조회

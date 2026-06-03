@@ -62,14 +62,34 @@ public class AdminDAO {
         }
     }
 
-    public boolean deleteDepartment(int departmentId) throws SQLException {
-        String sql = "DELETE FROM DEPARTMENT WHERE department_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    public boolean deleteDepartmentCascade(Connection conn, int departmentId) throws SQLException {
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM RESERVATION WHERE professor_id IN " +
+                "(SELECT professor_id FROM PROFESSOR WHERE department_id = ?) " +
+                "OR booth_id IN " +
+                "(SELECT booth_id FROM CONSULTATION_BOOTH WHERE department_id = ?)")) {
+            p.setInt(1, departmentId);
+            p.setInt(2, departmentId);
+            p.executeUpdate();
+        }
 
-            pstmt.setInt(1, departmentId);
-            return pstmt.executeUpdate() > 0;
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM PROFESSOR WHERE department_id = ?")) {
+            p.setInt(1, departmentId);
+            p.executeUpdate();
+        }
+
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM CONSULTATION_BOOTH WHERE department_id = ?")) {
+            p.setInt(1, departmentId);
+            p.executeUpdate();
+        }
+
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM DEPARTMENT WHERE department_id = ?")) {
+            p.setInt(1, departmentId);
+            return p.executeUpdate() > 0;
         }
     }
 
@@ -136,14 +156,23 @@ public class AdminDAO {
         }
     }
 
-    public boolean deleteProfessor(int professorId) throws SQLException {
-        String sql = "DELETE FROM PROFESSOR WHERE professor_id = ?";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, professorId);
-            return pstmt.executeUpdate() > 0;
+    public boolean deleteProfessorCascade(Connection conn, int professorId) throws SQLException {
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE cir FROM CHECK_IN_RECORD cir " +
+                "JOIN RESERVATION r ON cir.reservation_id = r.reservation_id " +
+                "WHERE r.professor_id = ?")) {
+            p.setInt(1, professorId);
+            p.executeUpdate();
+        }
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM RESERVATION WHERE professor_id = ?")) {
+            p.setInt(1, professorId);
+            p.executeUpdate();
+        }
+        try (PreparedStatement p = conn.prepareStatement(
+                "DELETE FROM PROFESSOR WHERE professor_id = ?")) {
+            p.setInt(1, professorId);
+            return p.executeUpdate() > 0;
         }
     }
 
@@ -170,6 +199,24 @@ public class AdminDAO {
             }
         }
         return list;
+    }
+
+    public int getBoothCapacity(int boothId) throws SQLException {
+        String sql = "SELECT capacity FROM CONSULTATION_BOOTH WHERE booth_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, boothId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("capacity");
+                }
+            }
+        }
+
+        return -1;
     }
 
     public int insertBooth(ConsultationBooth booth) throws SQLException {
@@ -210,12 +257,29 @@ public class AdminDAO {
         }
     }
 
-    public boolean deleteBooth(int boothId) throws SQLException {
-        String sql = "DELETE FROM CONSULTATION_BOOTH WHERE booth_id = ?";
+    public boolean deleteBoothCascade(Connection conn, int boothId) throws SQLException {
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE cir FROM CHECK_IN_RECORD cir " +
+                        "JOIN RESERVATION r ON cir.reservation_id = r.reservation_id " +
+                        "WHERE r.booth_id = ?")) {
+            pstmt.setInt(1, boothId);
+            pstmt.executeUpdate();
+        }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM RESERVATION WHERE booth_id = ?")) {
+            pstmt.setInt(1, boothId);
+            pstmt.executeUpdate();
+        }
 
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM TIME_SLOT WHERE booth_id = ?")) {
+            pstmt.setInt(1, boothId);
+            pstmt.executeUpdate();
+        }
+
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM CONSULTATION_BOOTH WHERE booth_id = ?")) {
             pstmt.setInt(1, boothId);
             return pstmt.executeUpdate() > 0;
         }
@@ -249,6 +313,25 @@ public class AdminDAO {
             }
         }
         return list;
+    }
+
+    public boolean existsOverlappingTimeSlot(int boothId, java.sql.Date date,
+                                              java.sql.Time startTime, java.sql.Time endTime,
+                                              int excludeSlotId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM TIME_SLOT " +
+                     "WHERE booth_id = ? AND slot_date = ? AND slot_id != ? " +
+                     "AND start_time < ? AND end_time > ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, boothId);
+            p.setDate(2, date);
+            p.setInt(3, excludeSlotId);
+            p.setTime(4, endTime);
+            p.setTime(5, startTime);
+            try (ResultSet rs = p.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
     }
 
     public int insertTimeSlot(TimeSlot slot) throws SQLException {
@@ -310,7 +393,7 @@ public class AdminDAO {
         String sql = """
                 SELECT reservation_id, status, created_at,
                        student_id, student_name, student_email,
-                       department_name, professor_name,
+                       student_major, department_name, professor_name,
                        booth_name, booth_type,
                        slot_date, start_time, end_time
                 FROM v_reservation_detail
@@ -323,7 +406,7 @@ public class AdminDAO {
         String sql = """
                 SELECT reservation_id, status, created_at,
                        student_id, student_name, student_email,
-                       department_name, professor_name,
+                       student_major, department_name, professor_name,
                        booth_name, booth_type,
                        slot_date, start_time, end_time
                 FROM v_reservation_detail
@@ -372,6 +455,7 @@ public class AdminDAO {
         detail.setStudentId(rs.getInt("student_id"));
         detail.setStudentName(rs.getString("student_name"));
         detail.setStudentEmail(rs.getString("student_email"));
+        detail.setStudentMajor(rs.getString("student_major"));
         detail.setDepartmentName(rs.getString("department_name"));
         detail.setProfessorName(rs.getString("professor_name"));
         detail.setBoothName(rs.getString("booth_name"));
@@ -387,34 +471,53 @@ public class AdminDAO {
     // =========================================================================
 
     public boolean processCheckIn(Connection conn, int reservationId) throws SQLException {
-        // 체크인 기록 생성
         String insertSql = "INSERT INTO CHECK_IN_RECORD (reservation_id) VALUES (?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
-            pstmt.setInt(1, reservationId);
-            if (pstmt.executeUpdate() == 0) return false;
-        }
-
-        // 예약 상태를 COMPLETED로 변경
-        String updateSql = "UPDATE RESERVATION SET status = 'COMPLETED' WHERE reservation_id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
             pstmt.setInt(1, reservationId);
             return pstmt.executeUpdate() > 0;
         }
     }
 
-    public boolean processCheckOut(int reservationId) throws SQLException {
-        String sql = """
-                UPDATE CHECK_IN_RECORD
-                SET check_out_time = NOW()
-                WHERE reservation_id = ? AND check_out_time IS NULL
-                """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+    public boolean processCheckOut(Connection conn, int reservationId) throws SQLException {
+        String updateCheckIn = "UPDATE CHECK_IN_RECORD SET check_out_time = NOW() WHERE reservation_id = ? AND check_out_time IS NULL";
+        try (PreparedStatement pstmt = conn.prepareStatement(updateCheckIn)) {
+            pstmt.setInt(1, reservationId);
+            if (pstmt.executeUpdate() == 0) return false;
+        }
+        String updateStatus = "UPDATE RESERVATION SET status = 'COMPLETED' WHERE reservation_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(updateStatus)) {
             pstmt.setInt(1, reservationId);
             return pstmt.executeUpdate() > 0;
         }
+    }
+
+    public List<ReservationDetail> findConfirmedNotCheckedIn() throws SQLException {
+        String sql = """
+                SELECT reservation_id, status, created_at,
+                       student_id, student_name, student_email,
+                       student_major, department_name, professor_name,
+                       booth_name, booth_type, slot_date, start_time, end_time
+                FROM v_reservation_detail
+                WHERE status = 'CONFIRMED'
+                AND reservation_id NOT IN (SELECT reservation_id FROM CHECK_IN_RECORD)
+                ORDER BY slot_date, start_time
+                """;
+        return queryReservationDetails(sql);
+    }
+
+    public List<ReservationDetail> findCheckedInNoCheckout() throws SQLException {
+        String sql = """
+                SELECT v.reservation_id, v.status, v.created_at,
+                       v.student_id, v.student_name, v.student_email,
+                       v.student_major, v.department_name, v.professor_name,
+                       v.booth_name, v.booth_type, v.slot_date, v.start_time, v.end_time
+                FROM v_reservation_detail v
+                JOIN CHECK_IN_RECORD c ON v.reservation_id = c.reservation_id
+                WHERE v.status = 'CONFIRMED'
+                AND c.check_out_time IS NULL
+                ORDER BY v.slot_date, v.start_time
+                """;
+        return queryReservationDetails(sql);
     }
 
     // 예약 기본 정보 조회 (체크인/노쇼 처리용)
@@ -452,6 +555,20 @@ public class AdminDAO {
         return null;
     }
 
+    // 예약 확정 (PENDING → CONFIRMED)
+    public boolean confirmReservation(Connection conn, int reservationId) throws SQLException {
+        String sql = """
+                UPDATE RESERVATION
+                SET status = 'CONFIRMED'
+                WHERE reservation_id = ?
+                  AND status = 'PENDING'
+                """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, reservationId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
     // =========================================================================
     // NO-SHOW 관리
     // =========================================================================
@@ -461,7 +578,7 @@ public class AdminDAO {
         String sql = """
                 SELECT v.reservation_id, v.status, v.created_at,
                        v.student_id, v.student_name, v.student_email,
-                       v.department_name, v.professor_name,
+                       v.student_major, v.department_name, v.professor_name,
                        v.booth_name, v.booth_type,
                        v.slot_date, v.start_time, v.end_time
                 FROM v_reservation_detail v

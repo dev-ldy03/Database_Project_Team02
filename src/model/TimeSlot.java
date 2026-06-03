@@ -65,4 +65,3 @@ public class TimeSlot {
         this.maxReservations = maxReservations;
     }
 }
-}

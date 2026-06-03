@@ -236,6 +236,26 @@ public class StudentDAO {
     }
 
     // 특정 부스의 예약 가능한 시간대 조회
+    public List<TimeSlot> findAllSlotsByBooth(int boothId) throws SQLException {
+        String sql = """
+                SELECT slot_id, booth_id, slot_date, start_time, end_time, max_reservations
+                FROM TIME_SLOT
+                WHERE booth_id = ?
+                ORDER BY slot_date, start_time
+                """;
+        List<TimeSlot> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, boothId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapTimeSlot(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     public List<TimeSlot> findAvailableSlotsByBooth(int boothId) throws SQLException {
         String sql = """
                 SELECT slot_id, booth_id, slot_date, start_time, end_time,
@@ -281,7 +301,7 @@ public class StudentDAO {
                        student_id, student_name, student_email,
                        department_name, professor_name,
                        booth_name, booth_type,
-                       slot_date, start_time, end_time
+                       slot_date, start_time, end_time, notes
                 FROM v_reservation_detail
                 WHERE student_id = ?
                 ORDER BY slot_date DESC, start_time DESC
@@ -311,7 +331,7 @@ public class StudentDAO {
                        student_id, student_name, student_email,
                        department_name, professor_name,
                        booth_name, booth_type,
-                       slot_date, start_time, end_time
+                       slot_date, start_time, end_time, notes
                 FROM v_reservation_detail
                 WHERE student_id = ?
                   AND status = ?
@@ -355,6 +375,7 @@ public class StudentDAO {
         detail.setSlotDate(rs.getDate("slot_date"));
         detail.setStartTime(rs.getTime("start_time"));
         detail.setEndTime(rs.getTime("end_time"));
+        detail.setNotes(rs.getString("notes"));
         return detail;
     }
 }
