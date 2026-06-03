@@ -288,8 +288,7 @@ public class ReservationDetailPanel extends JPanel {
         if (rd == null) return;
 
         if ("COMPLETED".equals(rd.getStatus()) || "CANCELLED".equals(rd.getStatus())) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "이미 완료되었거나 취소된 예약입니다.",
                     "취소 불가",
                     JOptionPane.WARNING_MESSAGE
@@ -297,8 +296,7 @@ public class ReservationDetailPanel extends JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + rd.getReservationId() + "를 취소하시겠습니까?",
                 "예약 취소",
                 JOptionPane.YES_NO_OPTION,
@@ -311,18 +309,16 @@ public class ReservationDetailPanel extends JPanel {
             boolean ok = new ReservationService().cancelReservation(rd.getReservationId());
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약이 취소되었습니다.",
                         "완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
 
-                MainFrame.navigate(MainFrame.MY_RESERVATIONS);
+                SwingUtilities.invokeLater(() -> MainFrame.navigate(MainFrame.MY_RESERVATIONS));
 
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "취소에 실패했습니다.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
@@ -330,8 +326,7 @@ public class ReservationDetailPanel extends JPanel {
             }
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE

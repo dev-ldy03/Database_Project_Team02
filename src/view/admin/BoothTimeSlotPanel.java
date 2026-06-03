@@ -434,8 +434,7 @@ public class BoothTimeSlotPanel extends JPanel {
         int id = (int) boothModel.getValueAt(row, 0);
         String name = boothModel.getValueAt(row, 1).toString();
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "부스 [" + name + "]을(를) 삭제하시겠습니까?\n관련 시간대, 예약, 교수 데이터도 함께 삭제됩니다.",
                 "부스 삭제",
                 JOptionPane.YES_NO_OPTION,
@@ -448,13 +447,13 @@ public class BoothTimeSlotPanel extends JPanel {
         try {
             boolean ok = adminService.deleteBoothCascade(id);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "부스가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "부스가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 refreshBooths();
             } else {
-                JOptionPane.showMessageDialog(this, "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -464,13 +463,12 @@ public class BoothTimeSlotPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
         panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
         panel.add(pwField, BorderLayout.CENTER);
-        int result = JOptionPane.showConfirmDialog(
-                this, panel, "관리자 인증",
+        int result = JOptionPane.showConfirmDialog(MainFrame.getInstance(), panel, "관리자 인증",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
         );
         if (result != JOptionPane.OK_OPTION) return false;
         if ("ewha1886".equals(new String(pwField.getPassword()))) return true;
-        JOptionPane.showMessageDialog(this, "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(MainFrame.getInstance(), "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
         return false;
     }
 
@@ -535,7 +533,7 @@ public class BoothTimeSlotPanel extends JPanel {
             applyBoothFilter();
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -753,8 +751,7 @@ public class BoothTimeSlotPanel extends JPanel {
     private void deleteSlotRow(int row) {
         int id = (int) slotModel.getValueAt(row, 0);
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "시간대 #" + id + "를 삭제하시겠습니까?",
                 "시간대 삭제",
                 JOptionPane.YES_NO_OPTION,
@@ -767,10 +764,10 @@ public class BoothTimeSlotPanel extends JPanel {
             boolean ok = adminService.deleteTimeSlot(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(this, "시간대가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "시간대가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 refreshSlots();
             } else {
-                JOptionPane.showMessageDialog(this, "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (SQLException ex) {
@@ -780,8 +777,7 @@ public class BoothTimeSlotPanel extends JPanel {
                     || msg.contains("slot_id")
                     || msg.contains("fk_reservation_slot")) {
 
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "해당 시간대에 연결된 예약 데이터가 있어 삭제할 수 없습니다.\n" +
                                 "먼저 관련 예약 정보를 삭제하거나 다른 시간대로 이동해주세요.",
                         "삭제 불가",
@@ -789,7 +785,7 @@ public class BoothTimeSlotPanel extends JPanel {
                 );
 
             } else {
-                JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -831,7 +827,7 @@ public class BoothTimeSlotPanel extends JPanel {
             allBoothStats = adminService.getBoothScheduleStats();
             applySlotFilter();
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -332,8 +332,7 @@ public class ReservationListPanel extends JPanel {
         String status = tableModel.getValueAt(row, COL_STATUS).toString();
 
         if ("CANCELLED".equals(status)) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "이미 취소된 예약입니다.",
                     "안내",
                     JOptionPane.INFORMATION_MESSAGE
@@ -342,8 +341,7 @@ public class ReservationListPanel extends JPanel {
         }
 
         if ("COMPLETED".equals(status)) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "이미 완료된 예약은 취소할 수 없습니다.",
                     "안내",
                     JOptionPane.WARNING_MESSAGE
@@ -351,8 +349,7 @@ public class ReservationListPanel extends JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 취소하시겠습니까?",
                 "예약 취소",
                 JOptionPane.YES_NO_OPTION,
@@ -365,24 +362,21 @@ public class ReservationListPanel extends JPanel {
             boolean ok = resvService.cancelReservation(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 #" + id + " 취소 완료.",
                         "완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
-                refresh();
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 취소 실패.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
                 );
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -535,15 +529,13 @@ public class ReservationListPanel extends JPanel {
                 pw.println(line);
             }
 
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "내보내기 완료!",
                     "완료",
                     JOptionPane.INFORMATION_MESSAGE
             );
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "내보내기 실패: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -557,8 +549,7 @@ public class ReservationListPanel extends JPanel {
         try {
             allData = adminService.getAllReservationDetails();
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "데이터 로딩 오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE

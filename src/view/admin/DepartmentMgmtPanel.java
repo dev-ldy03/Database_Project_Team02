@@ -181,8 +181,7 @@ public class DepartmentMgmtPanel extends JPanel {
         int id = (int) tableModel.getValueAt(row, 0);
         String name = tableModel.getValueAt(row, 1).toString();
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "학과 [" + name + "]을(를) 삭제하시겠습니까?\n관련 교수, 부스, 예약 데이터도 함께 삭제됩니다.",
                 "학과 삭제",
                 JOptionPane.YES_NO_OPTION,
@@ -195,13 +194,13 @@ public class DepartmentMgmtPanel extends JPanel {
         try {
             boolean ok = adminService.deleteDepartmentCascade(id);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "학과가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "학과가 삭제되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
                 refresh();
             } else {
-                JOptionPane.showMessageDialog(this, "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "삭제 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -211,13 +210,12 @@ public class DepartmentMgmtPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
         panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
         panel.add(pwField, BorderLayout.CENTER);
-        int result = JOptionPane.showConfirmDialog(
-                this, panel, "관리자 인증",
+        int result = JOptionPane.showConfirmDialog(MainFrame.getInstance(), panel, "관리자 인증",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
         );
         if (result != JOptionPane.OK_OPTION) return false;
         if ("ewha1886".equals(new String(pwField.getPassword()))) return true;
-        JOptionPane.showMessageDialog(this, "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(MainFrame.getInstance(), "비밀번호가 올바르지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
         return false;
     }
 
@@ -332,7 +330,7 @@ public class DepartmentMgmtPanel extends JPanel {
             allDepts = adminService.getAllDepartments();
             applyFilter();
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

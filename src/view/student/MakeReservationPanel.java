@@ -18,6 +18,7 @@ import java.util.List;
 public class MakeReservationPanel extends JPanel {
 
     private JTextArea notesArea;
+    private GreenButton confirmBtn;
 
     private JLabel lblDept;
     private JLabel lblProf;
@@ -239,7 +240,7 @@ public class MakeReservationPanel extends JPanel {
         JPanel btnPanel = new JPanel(new GridLayout(2, 1, 0, 8));
         btnPanel.setOpaque(false);
 
-        GreenButton confirmBtn = new GreenButton("예약 확정하기");
+        confirmBtn = new GreenButton("예약 확정하기");
         confirmBtn.setPreferredSize(new Dimension(0, 54));
         confirmBtn.setFont(UIConstants.f(Font.BOLD, 15));
         confirmBtn.addActionListener(e -> onConfirm());
@@ -307,13 +308,12 @@ public class MakeReservationPanel extends JPanel {
 
     private void onConfirm() {
         int studentId = MainFrame.getStudentId();
-        int slotId = MainFrame.getSelectedSlotId();
-        int profId = MainFrame.getSelectedProfId();
-        int boothId = MainFrame.getSelectedBoothId();
+        int slotId    = MainFrame.getSelectedSlotId();
+        int profId    = MainFrame.getSelectedProfId();
+        int boothId   = MainFrame.getSelectedBoothId();
 
         if (studentId == -1) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "로그인 정보가 없습니다. 다시 로그인해 주세요.",
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -322,8 +322,7 @@ public class MakeReservationPanel extends JPanel {
         }
 
         if (slotId == -1) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "예약할 시간대를 선택해 주세요.",
                     "선택 오류",
                     JOptionPane.WARNING_MESSAGE
@@ -332,45 +331,43 @@ public class MakeReservationPanel extends JPanel {
         }
 
         String notes = notesArea.getText().trim();
+        confirmBtn.setEnabled(false);
 
-        try {
-            ReservationService svc = new ReservationService();
-
-            int reservationId = svc.createReservation(
-                    studentId,
-                    slotId,
-                    profId,
-                    boothId,
-                    notes
-            );
-
-            if (reservationId == -1) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "예약에 실패했습니다.\n이미 해당 시간대에 예약이 있거나 정원이 마감되었습니다.",
-                        "예약 실패",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
+        new SwingWorker<Integer, Void>() {
+            @Override
+            protected Integer doInBackground() throws Exception {
+                return new ReservationService().createReservation(studentId, slotId, profId, boothId, notes);
             }
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "예약이 완료되었습니다.\n예약 번호: #" + reservationId,
-                    "예약 완료",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
-            MainFrame.navigate(MainFrame.MY_RESERVATIONS);
-
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "데이터베이스 오류: " + ex.getMessage(),
-                    "오류",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
+            @Override
+            protected void done() {
+                confirmBtn.setEnabled(true);
+                try {
+                    int reservationId = get();
+                    if (reservationId == -1) {
+                        JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                                "예약에 실패했습니다.\n이미 해당 시간대에 예약이 있거나 정원이 마감되었습니다.",
+                                "예약 실패",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                        return;
+                    }
+                    JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                            "예약이 완료되었습니다.\n예약 번호: #" + reservationId,
+                            "예약 완료",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    SwingUtilities.invokeLater(() -> MainFrame.navigate(MainFrame.MY_RESERVATIONS));
+                } catch (Exception ex) {
+                    Throwable cause = ex.getCause();
+                    JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                            "데이터베이스 오류: " + (cause != null ? cause.getMessage() : ex.getMessage()),
+                            "오류",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }.execute();
     }
 
     public void refresh() {

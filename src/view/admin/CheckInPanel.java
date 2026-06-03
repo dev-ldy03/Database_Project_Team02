@@ -435,8 +435,7 @@ public class CheckInPanel extends JPanel {
     private void doConfirm(int row) {
         int id = parseId(pendingModel.getValueAt(row, COL_ID).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 확정하시겠습니까?",
                 "예약 확정",
                 JOptionPane.YES_NO_OPTION,
@@ -449,24 +448,21 @@ public class CheckInPanel extends JPanel {
             boolean ok = adminService.confirmReservation(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 #" + id + " 확정 완료.",
                         "완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
-                refresh();
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 확정 실패.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
                 );
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -477,8 +473,7 @@ public class CheckInPanel extends JPanel {
     private void doCheckIn(int row) {
         int id = parseId(confirmedModel.getValueAt(row, COL_ID).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 체크인 처리하시겠습니까?\n처리 후 상담 중 목록으로 이동됩니다.",
                 "체크인",
                 JOptionPane.YES_NO_OPTION,
@@ -491,24 +486,21 @@ public class CheckInPanel extends JPanel {
             boolean ok = adminService.processCheckIn(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 #" + id + " 체크인 완료.",
                         "체크인 완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
-                refresh();
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "체크인 처리 실패.\nCONFIRMED 상태인지 확인해주세요.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
                 );
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -519,8 +511,7 @@ public class CheckInPanel extends JPanel {
     private void doCheckOut(int row) {
         int id = parseId(checkingInModel.getValueAt(row, COL_ID).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 체크아웃 처리하시겠습니까?\n처리 후 COMPLETED 상태가 됩니다.",
                 "체크아웃",
                 JOptionPane.YES_NO_OPTION,
@@ -531,21 +522,20 @@ public class CheckInPanel extends JPanel {
         try {
             boolean ok = adminService.processCheckOut(id);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "예약 #" + id + " 체크아웃 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
-                refresh();
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "예약 #" + id + " 체크아웃 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(this, "체크아웃 처리 실패.", "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "체크아웃 처리 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void doNoShow(int row) {
         int id = parseId(noShowModel.getValueAt(row, COL_ID).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 노쇼 처리하시겠습니까?\n상태가 CANCELLED로 변경됩니다.",
                 "노쇼 처리",
                 JOptionPane.YES_NO_OPTION,
@@ -556,25 +546,24 @@ public class CheckInPanel extends JPanel {
         try {
             boolean ok = adminService.processNoShow(id);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "예약 #" + id + " 노쇼 처리 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
-                refresh();
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "예약 #" + id + " 노쇼 처리 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(this, "노쇼 처리 실패.", "오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MainFrame.getInstance(), "노쇼 처리 실패.", "오류", JOptionPane.ERROR_MESSAGE);
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void doAllNoShow() {
         int count = noShowModel.getRowCount();
         if (count == 0) {
-            JOptionPane.showMessageDialog(this, "처리할 노쇼 대상이 없습니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "처리할 노쇼 대상이 없습니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "노쇼 대상 " + count + "건을 일괄 처리하시겠습니까?",
                 "일괄 노쇼 처리",
                 JOptionPane.YES_NO_OPTION,
@@ -584,10 +573,10 @@ public class CheckInPanel extends JPanel {
 
         try {
             int processed = adminService.processAllNoShows();
-            JOptionPane.showMessageDialog(this, processed + "건 노쇼 처리 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
-            refresh();
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), processed + "건 노쇼 처리 완료.", "완료", JOptionPane.INFORMATION_MESSAGE);
+            SwingUtilities.invokeLater(this::refresh);
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -595,8 +584,7 @@ public class CheckInPanel extends JPanel {
         DefaultTableModel model = fromPendingTable ? pendingModel : confirmedModel;
         int id = parseId(model.getValueAt(row, COL_ID).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "을 취소하시겠습니까?",
                 "예약 취소",
                 JOptionPane.YES_NO_OPTION,
@@ -609,24 +597,21 @@ public class CheckInPanel extends JPanel {
             boolean ok = resvService.cancelReservation(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 #" + id + " 취소 완료.",
                         "완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
-                refresh();
+                SwingUtilities.invokeLater(this::refresh);
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 취소 실패.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
                 );
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -658,7 +643,7 @@ public class CheckInPanel extends JPanel {
             if (noShowCountLbl != null) noShowCountLbl.setText(String.valueOf(noShow.size()));
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -299,8 +299,7 @@ public class StudentRegisterPanel extends JPanel {
         String major = tfMajor.getText().trim();
 
         if (name.isEmpty() || email.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "이름과 이메일은 필수 입력 항목입니다.",
                     "입력 오류",
                     JOptionPane.WARNING_MESSAGE
@@ -314,8 +313,7 @@ public class StudentRegisterPanel extends JPanel {
             int id = svc.registerStudent(name, email, phone, major);
 
             if (id == -1) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "이미 등록된 이메일이거나 등록에 실패했습니다.\n다른 이메일을 사용하거나 이메일로 조회해 주세요.",
                         "등록 실패",
                         JOptionPane.ERROR_MESSAGE
@@ -326,8 +324,7 @@ public class StudentRegisterPanel extends JPanel {
             var student = svc.getStudentByEmail(email.trim());
 
             if (student == null) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "학생 정보 조회에 실패했습니다. 이메일로 다시 조회해 주세요.",
                         "조회 실패",
                         JOptionPane.ERROR_MESSAGE
@@ -344,8 +341,7 @@ public class StudentRegisterPanel extends JPanel {
             MainFrame.navigate(MainFrame.STUDENT_HOME);
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "데이터베이스 오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -354,8 +350,7 @@ public class StudentRegisterPanel extends JPanel {
     }
 
     private void onLookupByEmail() {
-        String email = JOptionPane.showInputDialog(
-                this,
+        String email = JOptionPane.showInputDialog(MainFrame.getInstance(),
                 "등록된 이메일을 입력하세요:",
                 "이메일 조회",
                 JOptionPane.PLAIN_MESSAGE
@@ -371,8 +366,7 @@ public class StudentRegisterPanel extends JPanel {
             var student = svc.getStudentByEmail(email.trim());
 
             if (student == null) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "해당 이메일로 등록된 학생이 없습니다.",
                         "조회 실패",
                         JOptionPane.WARNING_MESSAGE
@@ -389,8 +383,7 @@ public class StudentRegisterPanel extends JPanel {
             MainFrame.navigate(MainFrame.STUDENT_HOME);
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "데이터베이스 오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE

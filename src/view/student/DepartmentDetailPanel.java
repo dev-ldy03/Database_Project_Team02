@@ -341,7 +341,7 @@ public class DepartmentDetailPanel extends JPanel {
 
     private Professor chooseProfessorForReservation() {
         if (currentProfessors == null || currentProfessors.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "선택 가능한 교수가 없습니다.");
+            JOptionPane.showMessageDialog(MainFrame.getInstance(), "선택 가능한 교수가 없습니다.");
             return null;
         }
 
@@ -352,8 +352,7 @@ public class DepartmentDetailPanel extends JPanel {
             options[i] = p.getProfessorName();
         }
 
-        String selected = (String) JOptionPane.showInputDialog(
-                this,
+        String selected = (String) JOptionPane.showInputDialog(MainFrame.getInstance(),
                 "상담할 교수를 선택해주세요.",
                 "교수 선택",
                 JOptionPane.PLAIN_MESSAGE,

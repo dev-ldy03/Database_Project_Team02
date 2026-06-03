@@ -314,31 +314,34 @@ public class MyReservationsPanel extends JPanel {
 
         t.addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(MouseEvent e) {
-                int row = t.rowAtPoint(e.getPoint());
-                int col = t.columnAtPoint(e.getPoint());
+            public void mouseClicked(MouseEvent e) {
+                int viewRow = t.rowAtPoint(e.getPoint());
+                int viewCol = t.columnAtPoint(e.getPoint());
 
-                if (row < 0) return;
+                if (viewRow < 0 || viewCol < 0) return;
+
+                int row = t.convertRowIndexToModel(viewRow);
+                int col = t.convertColumnIndexToModel(viewCol);
 
                 if (col == 8) {
                     String status = tableModel.getValueAt(row, 6) == null
                             ? ""
                             : tableModel.getValueAt(row, 6).toString();
 
-                    Rectangle cellRect = t.getCellRect(row, col, false);
+                    Rectangle cellRect = t.getCellRect(viewRow, viewCol, false);
                     int relX = e.getX() - cellRect.x;
 
                     boolean canCancel = "CONFIRMED".equals(status) || "PENDING".equals(status);
 
                     if (canCancel && relX > cellRect.width / 2) {
                         onCancel(row);
-                    } else {
+                    }
+                    else {
                         onDetail(row);
                     }
 
                     return;
                 }
-
                 onDetail(row);
             }
         });
@@ -407,8 +410,7 @@ public class MyReservationsPanel extends JPanel {
     private void onCancel(int row) {
         int id = parseId(tableModel.getValueAt(row, 0).toString());
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
                 "예약 #" + id + "를 취소하시겠습니까?",
                 "예약 취소",
                 JOptionPane.YES_NO_OPTION,
@@ -421,18 +423,16 @@ public class MyReservationsPanel extends JPanel {
             boolean ok = new ReservationService().cancelReservation(id);
 
             if (ok) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약이 취소되었습니다.",
                         "완료",
                         JOptionPane.INFORMATION_MESSAGE
                 );
 
-                refresh();
+                SwingUtilities.invokeLater(this::refresh);
 
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "취소할 수 없는 예약입니다.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
@@ -440,8 +440,7 @@ public class MyReservationsPanel extends JPanel {
             }
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "오류: " + ex.getMessage(),
                     "오류",
                     JOptionPane.ERROR_MESSAGE
@@ -529,25 +528,33 @@ public class MyReservationsPanel extends JPanel {
             );
         }
 
+        buildTabs();
+        applyFilter();
+
         if (studentId == -1) {
-            buildTabs();
-            applyFilter();
             return;
         }
 
-        try {
-            allReservations = new StudentService().getMyReservations(studentId);
+        new SwingWorker<List<ReservationDetail>, Void>() {
+            @Override
+            protected List<ReservationDetail> doInBackground() throws Exception {
+                return new StudentService().getMyReservations(studentId);
+            }
 
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "데이터 로딩 오류: " + ex.getMessage(),
-                    "오류",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-
-        buildTabs();
-        applyFilter();
+            @Override
+            protected void done() {
+                try {
+                    allReservations = get();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                            "데이터 로딩 오류: " + ex.getMessage(),
+                            "오류",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+                buildTabs();
+                applyFilter();
+            }
+        }.execute();
     }
 }

@@ -133,8 +133,7 @@ public class LandingPanel extends JPanel {
         panel.add(new JLabel("관리자 비밀번호를 입력하세요:"), BorderLayout.NORTH);
         panel.add(pwField, BorderLayout.CENTER);
 
-        int result = JOptionPane.showConfirmDialog(
-                this, panel, "관리자 로그인",
+        int result = JOptionPane.showConfirmDialog(MainFrame.getInstance(), panel, "관리자 로그인",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
         );
 
@@ -143,8 +142,7 @@ public class LandingPanel extends JPanel {
         String entered = new String(pwField.getPassword());
         if ("ewha1886".equals(entered)) return true;
 
-        JOptionPane.showMessageDialog(
-                this, "비밀번호가 올바르지 않습니다.",
+        JOptionPane.showMessageDialog(MainFrame.getInstance(), "비밀번호가 올바르지 않습니다.",
                 "인증 실패", JOptionPane.ERROR_MESSAGE
         );
         return false;

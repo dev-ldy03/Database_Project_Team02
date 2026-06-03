@@ -513,7 +513,7 @@ public class AdminDashboardPanel extends JPanel {
             refreshStatusBar(statusStats);
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this,
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
                     "데이터 로딩 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
