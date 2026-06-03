@@ -10,7 +10,11 @@ import java.sql.SQLException;
 public final class DatabaseConnection {
 
     private static final String JDBC_URL =
-            "jdbc:mysql://localhost:3306/DB2026Team02?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8";
+            "jdbc:mysql://localhost:3306/DB2026Team02"
+                    + "?useSSL=false"
+                    + "&allowPublicKeyRetrieval=true"
+                    + "&serverTimezone=Asia/Seoul"
+                    + "&characterEncoding=UTF-8";
     private static final String DB_USER = "DB2026Team02";
     private static final String DB_PASSWORD = "DB2026Team02";
 
