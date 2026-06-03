@@ -26,6 +26,8 @@ public class MyReservationsPanel extends JPanel {
     private String activeTab = "전체";
     private JPanel tabBar;
     private JLabel subTitleLabel;
+    private SwingWorker<List<ReservationDetail>, Void> loadWorker;
+    private final ActionCellRenderer actionCellRenderer = new ActionCellRenderer();
 
     private static final String[] TABS = {
             "전체", "CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"
@@ -202,6 +204,7 @@ public class MyReservationsPanel extends JPanel {
         };
 
         reservationTable = new JTable(tableModel);
+        reservationTable.setFillsViewportHeight(false);
         styleTable(reservationTable);
 
         JScrollPane scroll = new JScrollPane(reservationTable);
@@ -284,33 +287,7 @@ public class MyReservationsPanel extends JPanel {
             return wrapper;
         });
 
-        t.getColumnModel().getColumn(8).setCellRenderer((tbl, val, sel, foc, row, col) -> {
-            JPanel wrapper = new JPanel(new GridBagLayout());
-            wrapper.setBackground(UIConstants.WHITE);
-
-            JPanel buttonBox = new JPanel(new GridLayout(1, 2, 14, 0));
-            buttonBox.setOpaque(false);
-
-            String status = tableModel.getValueAt(row, 6) == null
-                    ? ""
-                    : tableModel.getValueAt(row, 6).toString();
-
-            JButton detailBtn = smallBtn("상세", UIConstants.PRIMARY);
-            buttonBox.add(detailBtn);
-
-            if ("CONFIRMED".equals(status) || "PENDING".equals(status)) {
-                JButton cancelBtn = smallBtn("취소", UIConstants.DANGER);
-                buttonBox.add(cancelBtn);
-            } else {
-                JPanel empty = new JPanel();
-                empty.setOpaque(false);
-                buttonBox.add(empty);
-            }
-
-            wrapper.add(buttonBox);
-
-            return wrapper;
-        });
+        t.getColumnModel().getColumn(8).setCellRenderer(actionCellRenderer);
 
         t.addMouseListener(new MouseAdapter() {
             @Override
@@ -357,40 +334,73 @@ public class MyReservationsPanel extends JPanel {
         t.getColumnModel().getColumn(8).setMaxWidth(240);
     }
 
-    private JButton smallBtn(String text, Color color) {
-        JButton b = new JButton(text) {
+    /** 테이블 셀용 버튼 모양 라벨 (실제 JButton 사용 시 재렌더마다 컴포넌트가 누적되어 클릭이 막힐 수 있음) */
+    private static JLabel actionLabel(String text, Color color) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-
-                g2.setRenderingHint(
-                        RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON
-                );
-
-                g2.setColor(new Color(
-                        color.getRed(),
-                        color.getGreen(),
-                        color.getBlue(),
-                        25
-                ));
-
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 25));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
-
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
+        label.setFont(UIConstants.f(Font.BOLD, 12));
+        label.setForeground(color);
+        label.setOpaque(false);
+        label.setPreferredSize(new Dimension(72, 30));
+        return label;
+    }
 
-        b.setFont(UIConstants.f(Font.BOLD, 12));
-        b.setForeground(color);
-        b.setContentAreaFilled(false);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setPreferredSize(new Dimension(72, 30));
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    private final class ActionCellRenderer implements TableCellRenderer {
+        private final JPanel wrapper = new JPanel(new GridBagLayout());
+        private final JPanel buttonBox = new JPanel(new GridLayout(1, 2, 14, 0));
+        private final JLabel detailLabel = actionLabel("상세", UIConstants.PRIMARY);
+        private final JLabel cancelLabel = actionLabel("취소", UIConstants.DANGER);
+        private final JPanel emptySlot = new JPanel();
 
-        return b;
+        ActionCellRenderer() {
+            wrapper.setBackground(UIConstants.WHITE);
+            wrapper.setOpaque(true);
+            buttonBox.setOpaque(false);
+            emptySlot.setOpaque(false);
+            buttonBox.add(detailLabel);
+            buttonBox.add(cancelLabel);
+            wrapper.add(buttonBox);
+            makeNonInteractive(wrapper);
+            makeNonInteractive(buttonBox);
+            makeNonInteractive(detailLabel);
+            makeNonInteractive(cancelLabel);
+            makeNonInteractive(emptySlot);
+        }
+
+        private void makeNonInteractive(JComponent c) {
+            c.setEnabled(false);
+            c.setFocusable(false);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected, boolean hasFocus,
+                int row, int column
+        ) {
+            String status = tableModel.getValueAt(row, 6) == null
+                    ? ""
+                    : tableModel.getValueAt(row, 6).toString();
+            boolean canCancel = "CONFIRMED".equals(status) || "PENDING".equals(status);
+
+            buttonBox.removeAll();
+            buttonBox.add(detailLabel);
+            if (canCancel) {
+                buttonBox.add(cancelLabel);
+            } else {
+                buttonBox.add(emptySlot);
+            }
+
+            return wrapper;
+        }
     }
 
     private void onDetail(int row) {
@@ -517,6 +527,10 @@ public class MyReservationsPanel extends JPanel {
     }
 
     public void refresh() {
+        if (loadWorker != null && !loadWorker.isDone()) {
+            loadWorker.cancel(true);
+        }
+
         allReservations.clear();
 
         int studentId = MainFrame.getStudentId();
@@ -535,7 +549,7 @@ public class MyReservationsPanel extends JPanel {
             return;
         }
 
-        new SwingWorker<List<ReservationDetail>, Void>() {
+        loadWorker = new SwingWorker<List<ReservationDetail>, Void>() {
             @Override
             protected List<ReservationDetail> doInBackground() throws Exception {
                 return new StudentService().getMyReservations(studentId);
@@ -543,6 +557,9 @@ public class MyReservationsPanel extends JPanel {
 
             @Override
             protected void done() {
+                if (isCancelled()) {
+                    return;
+                }
                 try {
                     allReservations = get();
                 } catch (Exception ex) {
@@ -555,6 +572,7 @@ public class MyReservationsPanel extends JPanel {
                 buildTabs();
                 applyFilter();
             }
-        }.execute();
+        };
+        loadWorker.execute();
     }
 }
