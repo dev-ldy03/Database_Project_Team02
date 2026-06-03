@@ -58,3 +58,4 @@ public class Student {
         this.major = major;
     }
 }
+}
