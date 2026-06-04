@@ -446,4 +446,46 @@ public class AdminService {
     public int[] getOverallStats() throws SQLException {
         return adminDAO.getOverallStats();
     }
+
+    // =========================================================================
+    // ONLINE_LINK
+    // =========================================================================
+
+    public OnlineLink getOnlineLinkByReservationId(int reservationId) throws SQLException {
+        return adminDAO.findOnlineLinkByReservationId(reservationId);
+    }
+
+    public int registerOnlineLink(int reservationId, String meetingUrl, String password, String expiresAt)
+            throws SQLException {
+
+        if (meetingUrl == null || meetingUrl.isBlank()) {
+            System.out.println("회의 URL은 필수입니다.");
+            return -1;
+        }
+
+        if (!adminDAO.isOnlineOrHybridReservation(reservationId)) {
+            System.out.println("온라인/하이브리드 부스 예약만 링크를 등록할 수 있습니다.");
+            return -1;
+        }
+
+        if (adminDAO.findOnlineLinkByReservationId(reservationId) != null) {
+            System.out.println("이미 등록된 온라인 링크가 있습니다.");
+            return -1;
+        }
+
+        String pw = password == null ? null : password.trim();
+        String expires = expiresAt == null ? null : expiresAt.trim();
+
+        int linkId = adminDAO.insertOnlineLink(
+                reservationId,
+                meetingUrl.trim(),
+                pw == null || pw.isEmpty() ? null : pw,
+                expires == null || expires.isEmpty() ? null : expires
+        );
+
+        if (linkId == -1) {
+            System.out.println("온라인 링크 등록에 실패했습니다.");
+        }
+        return linkId;
+    }
 }

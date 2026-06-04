@@ -1,5 +1,6 @@
 package DB2026Team02.view.admin;
 
+import DB2026Team02.model.OnlineLink;
 import DB2026Team02.model.ReservationDetail;
 import DB2026Team02.service.AdminService;
 import DB2026Team02.service.ReservationService;
@@ -36,11 +37,11 @@ public class ReservationListPanel extends JPanel {
     };
 
     private static final int[] WIDTHS = {
-            55, 80, 115, 120, 80, 95, 105, 95, 130
+            55, 80, 115, 120, 80, 95, 105, 95, 168
     };
 
-    private static final int ACTION_BTN_W = 52;
-    private static final int ACTION_BTN_GAP = 6;
+    private static final int ACTION_BTN_W = 46;
+    private static final int ACTION_BTN_GAP = 4;
 
     private final ActionCellRenderer actionCellRenderer = new ActionCellRenderer();
 
@@ -296,15 +297,44 @@ public class ReservationListPanel extends JPanel {
 
                 Rectangle cellRect = table.getCellRect(viewRow, viewCol, false);
                 int relX = e.getX() - cellRect.x;
-                int deleteStart = ACTION_BTN_W + ACTION_BTN_GAP;
-
-                if (relX >= deleteStart) {
-                    doDelete(viewRow);
-                } else {
-                    doCancel(viewRow);
-                }
+                handleActionClick(viewRow, relX);
             }
         });
+    }
+
+    private void handleActionClick(int viewRow, int relX) {
+        int x = 0;
+        int step = ACTION_BTN_W + ACTION_BTN_GAP;
+
+        if (relX < x + ACTION_BTN_W) {
+            doCancel(viewRow);
+            return;
+        }
+        x += step;
+
+        if (relX < x + ACTION_BTN_W) {
+            doDelete(viewRow);
+            return;
+        }
+        x += step;
+
+        if (isOnlineOrHybridRow(viewRow) && relX < x + ACTION_BTN_W) {
+            doRegisterOnlineLink(viewRow);
+        }
+    }
+
+    private boolean isOnlineOrHybridRow(int row) {
+        String boothType = boothTypeForRow(row);
+        return "ONLINE".equals(boothType) || "HYBRID".equals(boothType);
+    }
+
+    private String boothTypeForRow(int row) {
+        int id = parseId(tableModel.getValueAt(row, COL_ID).toString());
+        return allData.stream()
+                .filter(r -> r.getReservationId() == id)
+                .map(ReservationDetail::getBoothType)
+                .findFirst()
+                .orElse("");
     }
 
     private static JLabel actionLabel(String text, Color color) {
@@ -333,14 +363,14 @@ public class ReservationListPanel extends JPanel {
         private final JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, ACTION_BTN_GAP, 10));
         private final JLabel cancelLabel = actionLabel("취소", UIConstants.WARNING_FG);
         private final JLabel deleteLabel = actionLabel("삭제", UIConstants.DANGER);
+        private final JLabel linkLabel = actionLabel("링크", UIConstants.PRIMARY);
 
         ActionCellRenderer() {
             wrap.setBackground(UIConstants.WHITE);
-            wrap.add(cancelLabel);
-            wrap.add(deleteLabel);
             makeNonInteractive(wrap);
             makeNonInteractive(cancelLabel);
             makeNonInteractive(deleteLabel);
+            makeNonInteractive(linkLabel);
         }
 
         private void makeNonInteractive(JComponent c) {
@@ -353,6 +383,12 @@ public class ReservationListPanel extends JPanel {
                 JTable table, Object value, boolean isSelected, boolean hasFocus,
                 int row, int column
         ) {
+            wrap.removeAll();
+            wrap.add(cancelLabel);
+            wrap.add(deleteLabel);
+            if (isOnlineOrHybridRow(row)) {
+                wrap.add(linkLabel);
+            }
             return wrap;
         }
     }
@@ -450,6 +486,156 @@ public class ReservationListPanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private void doRegisterOnlineLink(int row) {
+        int id = parseId(tableModel.getValueAt(row, COL_ID).toString());
+
+        if (!isOnlineOrHybridRow(row)) {
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                    "온라인/하이브리드 부스 예약만 링크를 등록할 수 있습니다.",
+                    "안내",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
+
+        try {
+            OnlineLink existing = adminService.getOnlineLinkByReservationId(id);
+            if (existing != null) {
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                        "예약 #" + id + "에 이미 온라인 링크가 등록되어 있습니다.",
+                        "안내",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                return;
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                    "오류: " + ex.getMessage(),
+                    "오류",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        showOnlineLinkDialog(id);
+    }
+
+    private void showOnlineLinkDialog(int reservationId) {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                "온라인 상담 링크 등록 — 예약 #" + reservationId,
+                Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(460, 380);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(UIConstants.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(24, 28, 24, 28));
+
+        JLabel title = new JLabel("온라인 상담 링크 등록");
+        title.setFont(UIConstants.f(Font.BOLD, 18));
+        title.setForeground(UIConstants.TEXT_PRIMARY);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel sub = new JLabel("예약 #" + reservationId + " · 회의 URL은 필수입니다.");
+        sub.setFont(UIConstants.f(Font.PLAIN, 12));
+        sub.setForeground(UIConstants.TEXT_SECONDARY);
+        sub.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(sub);
+        panel.add(Box.createVerticalStrut(18));
+
+        JTextField urlField = linkFormField("", "https://zoom.us/j/123456789");
+        JTextField pwField = linkFormField("", "1234 (선택)");
+        JTextField expiresField = linkFormField("", "2026-05-20 11:00:00 (선택)");
+
+        panel.add(labeledLinkField("회의 URL *", urlField));
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(labeledLinkField("비밀번호", pwField));
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(labeledLinkField("만료 시간", expiresField));
+        panel.add(Box.createVerticalStrut(20));
+
+        GreenButton saveBtn = new GreenButton("등록하기");
+        saveBtn.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+        saveBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        saveBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        saveBtn.addActionListener(e -> {
+            String url = urlField.getText().trim();
+            if (url.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "회의 URL은 필수입니다.", "입력 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                int linkId = adminService.registerOnlineLink(
+                        reservationId,
+                        url,
+                        pwField.getText().trim(),
+                        expiresField.getText().trim()
+                );
+
+                if (linkId != -1) {
+                    JOptionPane.showMessageDialog(dialog,
+                            "온라인 링크가 등록되었습니다.",
+                            "완료",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    dialog.dispose();
+                    SwingUtilities.invokeLater(this::refresh);
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                            "온라인 링크 등록에 실패했습니다. (중복·부스 유형·입력 형식 확인)",
+                            "오류",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                        "오류: " + ex.getMessage(),
+                        "오류",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        });
+
+        panel.add(saveBtn);
+        dialog.setContentPane(panel);
+        dialog.setVisible(true);
+    }
+
+    private JTextField linkFormField(String value, String placeholder) {
+        JTextField f = new JTextField(value);
+        f.setFont(UIConstants.f(Font.PLAIN, 13));
+        f.setBorder(new CompoundBorder(
+                new LineBorder(UIConstants.BORDER),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        f.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        return f;
+    }
+
+    private JPanel labeledLinkField(String label, JTextField field) {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setOpaque(false);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(UIConstants.f(Font.BOLD, 13));
+        lbl.setForeground(UIConstants.TEXT_PRIMARY);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+
+        field.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.add(lbl);
+        p.add(field);
+        return p;
     }
 
     private void loadAllReservations() {
