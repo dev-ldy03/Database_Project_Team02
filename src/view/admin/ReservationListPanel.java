@@ -36,8 +36,13 @@ public class ReservationListPanel extends JPanel {
     };
 
     private static final int[] WIDTHS = {
-            55, 80, 115, 120, 80, 95, 105, 95, 80
+            55, 80, 115, 120, 80, 95, 105, 95, 130
     };
+
+    private static final int ACTION_BTN_W = 52;
+    private static final int ACTION_BTN_GAP = 6;
+
+    private final ActionCellRenderer actionCellRenderer = new ActionCellRenderer();
 
     private final AdminService adminService = new AdminService();
     private final ReservationService resvService = new ReservationService();
@@ -200,6 +205,7 @@ public class ReservationListPanel extends JPanel {
         };
 
         table = new JTable(tableModel);
+        table.setFillsViewportHeight(false);
         styleTable();
 
         JScrollPane scroll = new JScrollPane(table);
@@ -279,52 +285,76 @@ public class ReservationListPanel extends JPanel {
             return wrap;
         });
 
-        table.getColumnModel().getColumn(COL_ACTION).setCellRenderer((t, v, sel, foc, row, col) -> {
-            JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 10));
-            wrap.setBackground(UIConstants.WHITE);
-            wrap.add(actionBtn("취소", UIConstants.DANGER));
-            return wrap;
-        });
+        table.getColumnModel().getColumn(COL_ACTION).setCellRenderer(actionCellRenderer);
 
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                if (row < 0 || col != COL_ACTION) return;
-                doCancel(row);
+                int viewRow = table.rowAtPoint(e.getPoint());
+                int viewCol = table.columnAtPoint(e.getPoint());
+                if (viewRow < 0 || viewCol != COL_ACTION) return;
+
+                Rectangle cellRect = table.getCellRect(viewRow, viewCol, false);
+                int relX = e.getX() - cellRect.x;
+                int deleteStart = ACTION_BTN_W + ACTION_BTN_GAP;
+
+                if (relX >= deleteStart) {
+                    doDelete(viewRow);
+                } else {
+                    doCancel(viewRow);
+                }
             }
         });
     }
 
-    private JButton actionBtn(String text, Color color) {
-        JButton b = new JButton(text) {
+    private static JLabel actionLabel(String text, Color color) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
                 g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 18));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
-
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
+        label.setFont(UIConstants.f(Font.BOLD, 10));
+        label.setForeground(color);
+        label.setOpaque(false);
+        Dimension size = new Dimension(ACTION_BTN_W, 26);
+        label.setPreferredSize(size);
+        label.setMinimumSize(size);
+        label.setMaximumSize(size);
+        return label;
+    }
 
-        b.setFont(UIConstants.f(Font.BOLD, 10));
-        b.setForeground(color);
-        b.setContentAreaFilled(false);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setMargin(new Insets(0, 0, 0, 0));
+    private final class ActionCellRenderer implements TableCellRenderer {
+        private final JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, ACTION_BTN_GAP, 10));
+        private final JLabel cancelLabel = actionLabel("취소", UIConstants.WARNING_FG);
+        private final JLabel deleteLabel = actionLabel("삭제", UIConstants.DANGER);
 
-        Dimension size = new Dimension(58, 26);
-        b.setPreferredSize(size);
-        b.setMinimumSize(size);
-        b.setMaximumSize(size);
+        ActionCellRenderer() {
+            wrap.setBackground(UIConstants.WHITE);
+            wrap.add(cancelLabel);
+            wrap.add(deleteLabel);
+            makeNonInteractive(wrap);
+            makeNonInteractive(cancelLabel);
+            makeNonInteractive(deleteLabel);
+        }
 
-        return b;
+        private void makeNonInteractive(JComponent c) {
+            c.setEnabled(false);
+            c.setFocusable(false);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected, boolean hasFocus,
+                int row, int column
+        ) {
+            return wrap;
+        }
     }
 
     private void doCancel(int row) {
@@ -371,6 +401,44 @@ public class ReservationListPanel extends JPanel {
             } else {
                 JOptionPane.showMessageDialog(MainFrame.getInstance(),
                         "예약 취소 실패.",
+                        "오류",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                    "오류: " + ex.getMessage(),
+                    "오류",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void doDelete(int row) {
+        int id = parseId(tableModel.getValueAt(row, COL_ID).toString());
+
+        int confirm = JOptionPane.showConfirmDialog(MainFrame.getInstance(),
+                "정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+                "예약 삭제",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        try {
+            boolean ok = resvService.deleteReservation(id);
+
+            if (ok) {
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                        "예약 #" + id + "이(가) 삭제되었습니다.",
+                        "완료",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                SwingUtilities.invokeLater(this::refresh);
+            } else {
+                JOptionPane.showMessageDialog(MainFrame.getInstance(),
+                        "예약 삭제에 실패했습니다.",
                         "오류",
                         JOptionPane.ERROR_MESSAGE
                 );
