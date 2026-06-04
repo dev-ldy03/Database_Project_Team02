@@ -724,4 +724,114 @@ public class AdminDAO {
         }
         return new int[]{0, 0, 0, 0, 0};
     }
+
+    // =========================================================================
+    // ONLINE_LINK
+    // =========================================================================
+
+    public int insertOnlineLink(int reservationId, String meetingUrl, String password, String expiresAt)
+            throws SQLException {
+        String sql = """
+                INSERT INTO ONLINE_LINK (reservation_id, meeting_url, meeting_password, expires_at)
+                VALUES (?, ?, ?, ?)
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setInt(1, reservationId);
+            pstmt.setString(2, meetingUrl);
+            pstmt.setString(3, password);
+
+            Timestamp expires = parseExpiresAt(expiresAt);
+            if (expires == null) {
+                pstmt.setNull(4, Types.TIMESTAMP);
+            } else {
+                pstmt.setTimestamp(4, expires);
+            }
+
+            int affected = pstmt.executeUpdate();
+            if (affected == 0) {
+                return -1;
+            }
+
+            try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return -1;
+    }
+
+    public OnlineLink findOnlineLinkByReservationId(int reservationId) throws SQLException {
+        String sql = """
+                SELECT link_id, reservation_id, meeting_url, meeting_password, expires_at
+                FROM ONLINE_LINK
+                WHERE reservation_id = ?
+                ORDER BY link_id DESC
+                LIMIT 1
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, reservationId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapOnlineLink(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isOnlineOrHybridReservation(int reservationId) throws SQLException {
+        String sql = """
+                SELECT b.booth_type
+                FROM RESERVATION r
+                JOIN CONSULTATION_BOOTH b ON r.booth_id = b.booth_id
+                WHERE r.reservation_id = ?
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, reservationId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String boothType = rs.getString("booth_type");
+                    return "ONLINE".equals(boothType) || "HYBRID".equals(boothType);
+                }
+            }
+        }
+        return false;
+    }
+
+    private OnlineLink mapOnlineLink(ResultSet rs) throws SQLException {
+        OnlineLink link = new OnlineLink();
+        link.setLinkId(rs.getInt("link_id"));
+        link.setReservationId(rs.getInt("reservation_id"));
+        link.setMeetingUrl(rs.getString("meeting_url"));
+        link.setMeetingPassword(rs.getString("meeting_password"));
+
+        Timestamp expiresAt = rs.getTimestamp("expires_at");
+        if (expiresAt != null) {
+            link.setExpiresAt(expiresAt.toLocalDateTime());
+        }
+        return link;
+    }
+
+    private Timestamp parseExpiresAt(String expiresAt) {
+        if (expiresAt == null || expiresAt.isBlank()) {
+            return null;
+        }
+        String normalized = expiresAt.trim().replace('T', ' ');
+        if (normalized.length() == 16) {
+            normalized += ":00";
+        }
+        return Timestamp.valueOf(normalized);
+    }
 }
