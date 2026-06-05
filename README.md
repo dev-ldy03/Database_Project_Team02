@@ -140,7 +140,9 @@ Windows(cmd) 예시:
 
 ```bat
 mkdir out
-javac -encoding UTF-8 -d out -cp "lib\*" src\main\Main.java src\db\*.java src\model\*.java src\dao\*.java src\service\*.java src\test\*.java
+for /r src %f in (*.java) do @set SOURCES=%SOURCES% "%f"
+javac -encoding UTF-8 -d out -cp "lib\*" %SOURCES%
+set SOURCES=
 java -cp "out;lib\*" DB2026Team02.main.Main
 ```
 

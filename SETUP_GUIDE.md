@@ -68,7 +68,9 @@ javac -encoding UTF-8 -d out -cp "lib/*" $(find src -name "*.java")
 cd C:\path\to\Database_Project_Team02
 
 mkdir out
-javac -encoding UTF-8 -d out -cp "lib\*" src\main\Main.java src\db\*.java src\model\*.java src\dao\*.java src\service\*.java src\test\*.java src\view\*.java
+for /r src %f in (*.java) do @set SOURCES=%SOURCES% "%f"
+javac -encoding UTF-8 -d out -cp "lib\*" %SOURCES%
+set SOURCES=
 ```
 
 오류 없이 끝나면 `out/` 폴더에 `.class` 파일이 생성된 것 → 성공!
@@ -81,13 +83,13 @@ javac -encoding UTF-8 -d out -cp "lib\*" src\main\Main.java src\db\*.java src\mo
 
 ```bash
 # Mac/Linux
-java -cp "out:lib/*" DB2026Team02.view.MainFrame
+java -cp "out:lib/*" DB2026Team02.main.Main
 
 # Windows
-java -cp "out;lib\*" DB2026Team02.view.MainFrame
+java -cp "out;lib\*" DB2026Team02.main.Main
 ```
 
-실행하면 창이 팝업으로 떠요.
+실행하면 DB 연결 확인 후 창이 팝업으로 떠요.
 
 > 관리자 로그인 비밀번호: `ewha1886`
 
