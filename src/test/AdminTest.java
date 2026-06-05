@@ -68,7 +68,7 @@ public class AdminTest {
             System.out.println("\n[TEST 8] 전체 예약 현황 조회");
             List<ReservationDetail> allReservations = adminService.getAllReservationDetails();
             for (ReservationDetail r : allReservations) {
-                System.out.printf("  예약ID:%d | %s | %s | %s교수 | %s | %s %s~%s%n",
+                System.out.printf("  예약ID:%d | %s | %s | %s | %s | %s %s~%s%n",
                         r.getReservationId(), r.getStatus(),
                         r.getStudentName(), r.getProfessorName(),
                         r.getBoothName(), r.getSlotDate(),

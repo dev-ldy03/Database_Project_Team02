@@ -159,7 +159,7 @@ public class DepartmentSearchPanel extends JPanel {
         card.setPreferredSize(new Dimension(360, 170));
 
         JLabel icon = new JLabel("🏫");
-        icon.setFont(UIConstants.f(Font.PLAIN, 28));
+        icon.setFont(UIConstants.emoji(28));
         icon.setBounds(22, 28, 48, 48);
         card.add(icon);
 
@@ -170,7 +170,7 @@ public class DepartmentSearchPanel extends JPanel {
         card.add(name);
 
         JLabel loc = new JLabel("📍 " + (d.getLocation() != null ? d.getLocation() : ""));
-        loc.setFont(UIConstants.f(Font.PLAIN, 12));
+        loc.setFont(UIConstants.emoji(12));
         loc.setForeground(UIConstants.TEXT_SECONDARY);
         loc.setBounds(78, 54, 250, 20);
         card.add(loc);

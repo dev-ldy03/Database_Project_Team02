@@ -44,6 +44,19 @@ public class UIConstants {
 
     public static Font f(int style, int size) { return new Font(FONT_FAMILY, style, size); }
 
+    // 이모지를 렌더링할 수 있는 폰트 (Windows: Segoe UI Emoji, fallback: Dialog)
+    public static final String EMOJI_FONT_FAMILY;
+    static {
+        Set<String> avail = new HashSet<>(
+            Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
+        String[] candidates = {"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Dialog"};
+        String chosen = "Dialog";
+        for (String c : candidates) { if (avail.contains(c)) { chosen = c; break; } }
+        EMOJI_FONT_FAMILY = chosen;
+    }
+
+    public static Font emoji(int size) { return new Font(EMOJI_FONT_FAMILY, Font.PLAIN, size); }
+
     public static final int FRAME_W  = 1280;
     public static final int FRAME_H  = 800;
     public static final int NAVBAR_H = 60;

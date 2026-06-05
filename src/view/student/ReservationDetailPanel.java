@@ -200,7 +200,7 @@ public class ReservationDetailPanel extends JPanel {
         card.setMaximumSize(new Dimension(Short.MAX_VALUE, 160));
 
         JLabel title = new JLabel("📝  상담 요청 사항");
-        title.setFont(UIConstants.f(Font.BOLD, 14));
+        title.setFont(UIConstants.emoji(14));
         title.setForeground(UIConstants.TEXT_PRIMARY);
 
         card.add(title, BorderLayout.NORTH);
@@ -226,7 +226,7 @@ public class ReservationDetailPanel extends JPanel {
         card.setMaximumSize(new Dimension(Short.MAX_VALUE, 220));
 
         JLabel title = new JLabel("📋  예약 진행 상황");
-        title.setFont(UIConstants.f(Font.BOLD, 14));
+        title.setFont(UIConstants.emoji(14));
         title.setForeground(UIConstants.TEXT_PRIMARY);
 
         card.add(title, BorderLayout.NORTH);
