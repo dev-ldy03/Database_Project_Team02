@@ -245,7 +245,7 @@ public class ReservationDetailPanel extends JPanel {
         wrapper.setOpaque(false);
         wrapper.setMaximumSize(new Dimension(Short.MAX_VALUE, 56));
 
-        JButton cancelBtn = new JButton("예약 취소하기") {
+        JLabel cancelBtn = new JLabel("예약 취소하기", SwingConstants.CENTER) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -269,13 +269,13 @@ public class ReservationDetailPanel extends JPanel {
 
         cancelBtn.setFont(UIConstants.f(Font.BOLD, 15));
         cancelBtn.setForeground(UIConstants.DANGER);
-        cancelBtn.setContentAreaFilled(false);
-        cancelBtn.setBorderPainted(false);
-        cancelBtn.setFocusPainted(false);
+        cancelBtn.setOpaque(false);
         cancelBtn.setPreferredSize(new Dimension(0, 52));
         cancelBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        cancelBtn.addActionListener(e -> onCancel());
+        cancelBtn.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { onCancel(); }
+        });
 
         wrapper.add(cancelBtn, BorderLayout.CENTER);
 

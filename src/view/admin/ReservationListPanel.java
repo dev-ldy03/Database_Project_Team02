@@ -303,22 +303,22 @@ public class ReservationListPanel extends JPanel {
     }
 
     private void handleActionClick(int viewRow, int relX) {
-        int x = 0;
+        relX -= ACTION_BTN_GAP;
         int step = ACTION_BTN_W + ACTION_BTN_GAP;
 
-        if (relX < x + ACTION_BTN_W) {
+        if (relX < ACTION_BTN_W) {
             doCancel(viewRow);
             return;
         }
-        x += step;
+        relX -= step;
 
-        if (relX < x + ACTION_BTN_W) {
+        if (relX < ACTION_BTN_W) {
             doDelete(viewRow);
             return;
         }
-        x += step;
+        relX -= step;
 
-        if (isOnlineOrHybridRow(viewRow) && relX < x + ACTION_BTN_W) {
+        if (isOnlineOrHybridRow(viewRow) && relX < ACTION_BTN_W) {
             doRegisterOnlineLink(viewRow);
         }
     }
@@ -360,7 +360,7 @@ public class ReservationListPanel extends JPanel {
     }
 
     private final class ActionCellRenderer implements TableCellRenderer {
-        private final JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, ACTION_BTN_GAP, 10));
+        private final JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT, ACTION_BTN_GAP, 10));
         private final JLabel cancelLabel = actionLabel("취소", UIConstants.WARNING_FG);
         private final JLabel deleteLabel = actionLabel("삭제", UIConstants.DANGER);
         private final JLabel linkLabel = actionLabel("링크", UIConstants.PRIMARY);

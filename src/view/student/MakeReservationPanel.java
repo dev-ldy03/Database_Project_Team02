@@ -245,14 +245,13 @@ public class MakeReservationPanel extends JPanel {
         confirmBtn.setFont(UIConstants.f(Font.BOLD, 15));
         confirmBtn.addActionListener(e -> onConfirm());
 
-        JButton cancelBtn = new JButton("취소하고 돌아가기");
+        JLabel cancelBtn = new JLabel("취소하고 돌아가기", SwingConstants.CENTER);
         cancelBtn.setFont(UIConstants.f(Font.PLAIN, 13));
         cancelBtn.setForeground(UIConstants.TEXT_MUTED);
-        cancelBtn.setContentAreaFilled(false);
-        cancelBtn.setBorderPainted(false);
-        cancelBtn.setFocusPainted(false);
         cancelBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cancelBtn.addActionListener(e -> MainFrame.navigate(MainFrame.DEPT_DETAIL));
+        cancelBtn.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { MainFrame.navigate(MainFrame.DEPT_DETAIL); }
+        });
 
         btnPanel.add(confirmBtn);
         btnPanel.add(cancelBtn);
