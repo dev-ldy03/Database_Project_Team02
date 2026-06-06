@@ -349,6 +349,13 @@ public class StudentRegisterPanel extends JPanel {
         }
     }
 
+    public void refresh() {
+        tfName.setText("");
+        tfEmail.setText("");
+        tfPhone.setText("");
+        tfMajor.setText("");
+    }
+
     private void onLookupByEmail() {
         String email = JOptionPane.showInputDialog(MainFrame.getInstance(),
                 "등록된 이메일을 입력하세요:",

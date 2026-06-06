@@ -284,8 +284,20 @@ public class DepartmentDetailPanel extends JPanel {
             wrapper.setBackground(UIConstants.WHITE);
 
             if ("예약 가능".equals(slotModel.getValueAt(row, 4))) {
-                GreenButton btn = new GreenButton("예약");
+                JLabel btn = new JLabel("예약", SwingConstants.CENTER) {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(UIConstants.PRIMARY);
+                        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                        g2.dispose();
+                        super.paintComponent(g);
+                    }
+                };
                 btn.setFont(UIConstants.f(Font.BOLD, 12));
+                btn.setForeground(Color.WHITE);
+                btn.setOpaque(false);
                 btn.setPreferredSize(new Dimension(66, 30));
                 wrapper.add(btn);
             }

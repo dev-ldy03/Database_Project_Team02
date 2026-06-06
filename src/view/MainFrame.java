@@ -46,6 +46,7 @@ public class MainFrame extends JFrame {
     private final CardLayout     cardLayout = new CardLayout();
     private final JPanel         cardPanel  = new JPanel(cardLayout);
 
+    private StudentRegisterPanel   registerPanel;
     private StudentHomePanel      homePanel;
     private DepartmentSearchPanel searchPanel;
     private DepartmentDetailPanel detailPanel;
@@ -64,14 +65,15 @@ public class MainFrame extends JFrame {
         instance = this;
         setTitle("대학원 박람회 상담 예약 시스템 — 이화여자대학교");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1280, 800);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
         cardPanel.setBackground(Color.WHITE);
 
         cardPanel.add(new LandingPanel(),         LANDING);
-        cardPanel.add(new StudentRegisterPanel(),  STUDENT_REGISTER);
+        registerPanel = new StudentRegisterPanel();
+        cardPanel.add(registerPanel,              STUDENT_REGISTER);
 
         homePanel      = new StudentHomePanel();
         searchPanel    = new DepartmentSearchPanel();
@@ -109,6 +111,8 @@ public class MainFrame extends JFrame {
         if (instance == null) return;
         try {
             switch (panel) {
+                case STUDENT_REGISTER:
+                    instance.registerPanel.refresh(); break;
                 case STUDENT_HOME:
                     instance.homePanel.refresh(); break;
                 case DEPT_SEARCH:

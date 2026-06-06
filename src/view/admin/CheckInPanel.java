@@ -192,14 +192,13 @@ public class CheckInPanel extends JPanel {
 
         JPanel header = buildSectionHeader("노쇼 대상", "PENDING / CONFIRMED", TABLE_NOSHOW);
 
-        JButton batchBtn = new JButton("일괄 노쇼 처리");
+        JLabel batchBtn = new JLabel("일괄 노쇼 처리");
         batchBtn.setFont(UIConstants.f(Font.BOLD, 11));
         batchBtn.setForeground(UIConstants.DANGER);
-        batchBtn.setContentAreaFilled(false);
-        batchBtn.setBorderPainted(false);
-        batchBtn.setFocusPainted(false);
         batchBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        batchBtn.addActionListener(e -> doAllNoShow());
+        batchBtn.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { doAllNoShow(); }
+        });
         header.add(batchBtn, BorderLayout.EAST);
 
         card.add(header, BorderLayout.NORTH);
@@ -357,22 +356,7 @@ public class CheckInPanel extends JPanel {
             return wrap;
         });
 
-        table.getColumnModel().getColumn(COL_ACTION).setCellRenderer((t, v, sel, foc, row, col) -> {
-            JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 10));
-            wrap.setBackground(UIConstants.WHITE);
-            if (tableType == TABLE_PENDING) {
-                wrap.add(actionBtn("확정", UIConstants.PRIMARY));
-                wrap.add(actionBtn("취소", UIConstants.DANGER));
-            } else if (tableType == TABLE_CONFIRMED) {
-                wrap.add(actionBtn("체크인", UIConstants.PRIMARY));
-                wrap.add(actionBtn("취소", UIConstants.DANGER));
-            } else if (tableType == TABLE_CHECKINGIN) {
-                wrap.add(actionBtn("체크아웃", new Color(14, 116, 144)));
-            } else {
-                wrap.add(actionBtn("노쇼 처리", UIConstants.DANGER));
-            }
-            return wrap;
-        });
+        table.getColumnModel().getColumn(COL_ACTION).setCellRenderer(new ActionCellRenderer(tableType));
 
         table.addMouseListener(new MouseAdapter() {
             @Override public void mousePressed(MouseEvent e) {
@@ -401,35 +385,61 @@ public class CheckInPanel extends JPanel {
         });
     }
 
-    private JButton actionBtn(String text, Color color) {
-        JButton b = new JButton(text) {
+    private JLabel actionLabel(String text, Color color) {
+        JLabel l = new JLabel(text, SwingConstants.CENTER) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
                 g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 18));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
-
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-
-        b.setFont(UIConstants.f(Font.BOLD, 10));
-        b.setForeground(color);
-        b.setContentAreaFilled(false);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setMargin(new Insets(0, 0, 0, 0));
-
+        l.setFont(UIConstants.f(Font.BOLD, 10));
+        l.setForeground(color);
+        l.setOpaque(false);
+        l.setFocusable(false);
         int width = ("체크아웃".equals(text) || "노쇼 처리".equals(text)) ? 86 : 70;
-
         Dimension size = new Dimension(width, 28);
-        b.setPreferredSize(size);
-        b.setMinimumSize(size);
-        b.setMaximumSize(size);
+        l.setPreferredSize(size);
+        l.setMinimumSize(size);
+        l.setMaximumSize(size);
+        return l;
+    }
 
-        return b;
+    private final class ActionCellRenderer implements TableCellRenderer {
+        private final JPanel wrap;
+
+        ActionCellRenderer(int tableType) {
+            wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 10));
+            wrap.setBackground(UIConstants.WHITE);
+            if (tableType == TABLE_PENDING) {
+                wrap.add(actionLabel("확정", UIConstants.PRIMARY));
+                wrap.add(actionLabel("취소", UIConstants.DANGER));
+            } else if (tableType == TABLE_CONFIRMED) {
+                wrap.add(actionLabel("체크인", UIConstants.PRIMARY));
+                wrap.add(actionLabel("취소", UIConstants.DANGER));
+            } else if (tableType == TABLE_CHECKINGIN) {
+                wrap.add(actionLabel("체크아웃", new Color(14, 116, 144)));
+            } else {
+                wrap.add(actionLabel("노쇼 처리", UIConstants.DANGER));
+            }
+            makeNonInteractive(wrap);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable t, Object v, boolean sel, boolean foc, int row, int col) {
+            return wrap;
+        }
+
+        private void makeNonInteractive(JComponent c) {
+            c.setFocusable(false);
+            for (Component child : c.getComponents()) {
+                if (child instanceof JComponent) makeNonInteractive((JComponent) child);
+            }
+        }
     }
 
     private void doConfirm(int row) {
